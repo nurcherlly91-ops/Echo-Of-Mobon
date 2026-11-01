@@ -34,3 +34,14 @@ const EOMONLINE={
 };
 
 document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>document.getElementById(b.dataset.close)?.close())});
+
+(function(){
+  const script=document.currentScript;
+  if(!script)return;
+  const base=new URL('.',script.src).href;
+  const load=src=>new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)});
+  (async()=>{try{
+    for(let i=1;i<=5;i++)await load(base+`logo-chunk-${i}.js?v=20261101-3`);
+    await load(base+'logo-loader.js?v=20261101-3');
+  }catch(e){console.error('Echo of Mobon logo loader:',e)}})();
+})();
