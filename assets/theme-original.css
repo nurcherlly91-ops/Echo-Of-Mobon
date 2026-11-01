@@ -9,6 +9,44 @@
 dialog{color:var(--ink)}dialog::backdrop{background:rgba(0,20,34,.65);backdrop-filter:blur(3px)}.modal{background:var(--paper);border:0;color:var(--ink);box-shadow:0 30px 90px rgba(0,0,0,.3)}.close{background:#eee5d8;color:var(--ink);border-radius:50%}.reader-book-head{background:radial-gradient(circle at 90% 10%,rgba(239,202,108,.18),transparent 25%),linear-gradient(135deg,#052843,#0b6070);color:#fff}.reader-book-info h2{color:#fff}.reader-book-info p{color:#d8e5e6}.reader-screen{background:#e9eef0}.reader-content{background:#fff;color:#293940}.member-card{background:#fffdf8;color:var(--ink)}.table-wrap table,table{background:#fff;color:var(--ink)}th{background:#f2eadb}th,td{border-bottom:1px solid var(--line)}
 .admin-page{background:linear-gradient(180deg,#eef3f6,#f8f4e9);color:var(--ink)}.admin-page .topbar{background:linear-gradient(90deg,#052843,#0b6070)}.admin-page .card{background:#fffdf8;color:var(--ink)}.admin-page .admin-login{border-top:5px solid var(--gold)}.admin-page .stats .card{background:#fff}.admin-page .stats .card b{color:var(--teal)}.admin-page .admin-tabs{border-bottom:1px solid var(--line)}.admin-page .tab{color:#65727a;background:transparent}.admin-page .tab.active{color:var(--ink);border-color:var(--gold);background:#fff8e9}.admin-page table{background:#fff}.admin-page th{background:#f2eadb}.admin-page .modal{background:#fffdf8}
 .brand img,.guest-logo,.philo-logo,.admin-login-logo,.member-card-head img{content:normal!important;object-fit:contain!important;background:#fff!important}
-@media(max-width:900px){.guest-hero-inner{grid-template-columns:250px 1fr}.book-grid{grid-template-columns:repeat(2,1fr)}.pillars{grid-template-columns:1fr}.shelf-books{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media(max-width:700px){.guest-hero-inner,.philosophy{grid-template-columns:1fr}.guest-logo{width:220px;margin:auto}.guest-hero-inner{text-align:center}.filters{grid-template-columns:1fr}.book-grid{grid-template-columns:repeat(2,1fr)}.shelf-books{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:480px){.book-grid{grid-template-columns:1fr 1fr;gap:8px}.shelf-books{grid-template-columns:repeat(2,minmax(0,1fr))}.digital-library-hero{align-items:flex-start;flex-direction:column;padding:22px}.digital-library-tools{grid-template-columns:1fr}.guest-hero h1{font-size:3rem}}
+
+/* Gold Classic: aksen Yunani/Mesir */
+.admin-page{background:radial-gradient(circle at 10% 0,rgba(245,192,75,.14),transparent 22%),linear-gradient(180deg,#f7f1df,#eef3f4 48%,#f8f4e9)}
+.admin-page .topbar{position:relative;background:linear-gradient(100deg,#031f35,#063663 45%,#0b6070);border-bottom:3px solid #d8a437;box-shadow:0 10px 26px rgba(3,31,53,.2)}
+.admin-page .topbar:after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:6px;background:repeating-linear-gradient(90deg,#d8a437 0 14px,transparent 14px 20px,#d8a437 20px 24px,transparent 24px 38px);opacity:.9}
+.admin-page .admin-head h1{color:#063663;text-shadow:0 1px 0 #fff}
+.admin-page .stats{grid-template-columns:repeat(5,minmax(0,1fr))}
+.admin-page .stats .card{position:relative;overflow:hidden;border:1px solid rgba(190,139,39,.45);box-shadow:0 12px 28px rgba(7,36,58,.09);background:linear-gradient(145deg,#fffdf8,#f7ecd0)}
+.admin-page .stats .card:before{content:"";position:absolute;inset:0 0 auto;height:4px;background:linear-gradient(90deg,#9b6815,#f3cc68,#9b6815)}
+.admin-page .stats .card b{color:#a36e16}
+.admin-page .admin-tabs{padding:10px;border:1px solid rgba(190,139,39,.28);border-radius:16px;background:rgba(255,253,248,.72)}
+.admin-page .tab{border:1px solid transparent;color:#385266}
+.admin-page .tab.active{background:linear-gradient(135deg,#fff4cf,#e8bd55);color:#392600;border-color:#bd8b27;box-shadow:0 6px 16px rgba(175,122,21,.2)}
+.admin-page .tab-panel{position:relative;border:1px solid rgba(186,133,35,.4);box-shadow:0 18px 42px rgba(7,36,58,.09);background:linear-gradient(180deg,#fffdf8,#fffaf0)}
+.admin-page .tab-panel:before{content:"◇  ECHO OF MOBON  ◇";display:block;text-align:center;letter-spacing:.24em;font:700 10px Georgia,serif;color:#a67821;border-bottom:1px solid rgba(184,134,40,.25);padding-bottom:10px;margin-bottom:12px}
+.admin-page .panel-head h2{color:#063663}
+.admin-page th{background:linear-gradient(180deg,#efe0b8,#e6d39e);color:#332409;border-bottom:2px solid #bd8b27}
+.admin-page td{background:rgba(255,255,255,.72)}
+.admin-page tr:hover td{background:#fff6dc}
+.admin-page .btn:not(.danger):not(.ghost){background:linear-gradient(135deg,#f6ce68,#c88d20);color:#2c1b00;box-shadow:0 4px 10px rgba(151,99,11,.18)}
+.admin-page .btn.danger{background:linear-gradient(135deg,#b84e44,#86362f);box-shadow:0 4px 10px rgba(120,45,38,.16)}
+.report-actions{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}.report-actions .btn{min-width:92px}.report-pdf:before{content:"PDF · "}.report-print:before{content:"⎙ · "}.admin-delete-btn{margin-left:4px}
+
+/* Rak digital dibuat lebih terbaca */
+.bookshelf-frame{border:1px solid rgba(239,202,108,.5);box-shadow:0 28px 60px rgba(4,31,47,.24),inset 0 0 0 2px rgba(239,202,108,.08)}
+.bookshelf-top{font-family:Georgia,"Times New Roman",serif;letter-spacing:.14em;font-weight:700}
+.shelf-books{align-items:stretch;gap:18px}
+.shelf-book{display:flex;flex-direction:column;min-width:0;padding:12px;border:1px solid rgba(239,202,108,.48);border-radius:14px;background:linear-gradient(180deg,rgba(255,253,248,.98),rgba(246,239,225,.97));box-shadow:0 12px 24px rgba(0,0,0,.24);transition:transform .18s ease,box-shadow .18s ease}
+.shelf-book:hover{transform:translateY(-4px);box-shadow:0 17px 30px rgba(0,0,0,.3)}
+.book-object{min-height:190px;display:flex;align-items:flex-end;justify-content:center;position:relative}
+.digital-book-cover,.auto-book-cover{width:100%;max-width:150px;height:210px;object-fit:cover}
+.shelf-book-meta{padding:12px 2px 2px;display:flex;flex-direction:column;flex:1}
+.shelf-book-meta h3{color:#082e49!important;font-size:1rem;line-height:1.25;margin:0 0 6px;min-height:2.5em;overflow-wrap:anywhere}
+.shelf-book-meta p{color:#51606a!important;font-size:.86rem;margin:0 0 6px;min-height:1.3em}
+.book-meta-mini{display:flex;flex-wrap:wrap;gap:4px;color:#6c5733!important;font-size:.75rem;line-height:1.35;margin-bottom:10px}
+.shelf-read-btn{margin-top:auto;width:100%;font-size:.83rem;padding:9px 8px}
+.book-ribbon{z-index:3}
+
+@media(max-width:900px){.guest-hero-inner{grid-template-columns:250px 1fr}.book-grid{grid-template-columns:repeat(2,1fr)}.pillars{grid-template-columns:1fr}.shelf-books{grid-template-columns:repeat(4,minmax(0,1fr))}.admin-page .stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.guest-hero-inner,.philosophy{grid-template-columns:1fr}.guest-logo{width:220px;margin:auto}.guest-hero-inner{text-align:center}.filters{grid-template-columns:1fr}.book-grid{grid-template-columns:repeat(2,1fr)}.shelf-books{grid-template-columns:repeat(3,minmax(0,1fr))}.admin-page .stats{grid-template-columns:repeat(2,1fr)}.report-actions{margin-left:0}}
+@media(max-width:480px){.book-grid{grid-template-columns:1fr 1fr;gap:8px}.shelf-books{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding-left:5px;padding-right:5px}.digital-library-hero{align-items:flex-start;flex-direction:column;padding:22px}.digital-library-tools{grid-template-columns:1fr}.guest-hero h1{font-size:3rem}.shelf-book{padding:8px}.book-object{min-height:155px}.digital-book-cover,.auto-book-cover{height:165px;max-width:118px}.shelf-book-meta h3{font-size:.9rem}.shelf-book-meta p{font-size:.78rem}.book-meta-mini{font-size:.68rem}.admin-page .stats{grid-template-columns:1fr 1fr}}
