@@ -94,3 +94,5 @@ function artsAnswer(q){const l=q.toLowerCase();if(l.includes('warna primer'))ret
             git commit -m "feat: expand Mobon AI Tutor subjects and lessons"
             git push origin main
           fi
+
+# retrigger after workflow registration
