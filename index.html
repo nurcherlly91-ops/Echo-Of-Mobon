@@ -1,14 +1,169 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Echo of Mobon — Portal Tamu & Anggota</title><link rel="icon" href="assets/echo-of-mobon-logo.jpg?v=8"><link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/theme-original.css?v=20261101-9"><link rel="stylesheet" href="assets/member-card-v2.css?v=20261102-1"><link rel="stylesheet" href="assets/portal-v2.css?v=20261102-1"></head><body><header class="topbar floating"><a class="brand" href="./"><img src="assets/echo-of-mobon-logo.jpg?v=8"><div><strong>Echo of Mobon</strong><small>Literasi Suara Fayfiye</small></div></a><nav><a class="btn ghost" href="./">Beranda</a><a class="btn ghost" href="./admin/">Admin</a></nav></header>
-<section class="guest-hero"><div class="guest-hero-inner"><img class="guest-logo" src="assets/echo-of-mobon-logo.jpg?v=8"><div><div class="kicker gold">LITERASI SUARA FAYFIYE</div><h1>Echo of Mobon</h1><p class="slogan">An Island of Peace, Unseen by the Eyes, Heard by the Universe.</p><p>Ruang literasi fisik dan digital untuk membaca, belajar, dan berbagi pengetahuan.</p><div class="actions"><button id="guestEntryBtn" class="btn primary large">Isi Buku Tamu</button><button id="joinMemberBtn" class="btn ghost large">Daftar Anggota</button><button id="myCardBtn" class="btn ghost large hidden">Kartu Saya</button></div></div></div></section>
-<main class="container guest-container"><section class="card philosophy"><img src="assets/echo-of-mobon-logo.jpg?v=8" class="philo-logo"><div><div class="kicker">ARTI & MAKNA</div><h2>Gema yang Lahir dari Keheningan</h2><p><strong>Echo of Mobon</strong> adalah simbol pesan yang murni, mendalam, dan abadi. <em>Echo</em> adalah gema—suara yang terus memantul dan bertahan lebih lama daripada suara aslinya. Pulau Mobon menjadi gambaran <em>The Silent Sanctuary</em>: ruang yang tenang, kokoh, dan berakar pada identitas.</p><p><strong>Makna esensial:</strong> “Hening namun Menggelegar, Tersembunyi namun Memengaruhi.”</p></div></section>
-<section class="pillars"><article><span>Ⅰ</span><h3>Silence as the Source</h3><p>Keheningan menjadi sumber refleksi dan pengetahuan.</p></article><article><span>Ⅱ</span><h3>The Unstoppable Resonance</h3><p>Dampak besar dapat lahir dari tempat yang kecil.</p></article><article><span>Ⅲ</span><h3>The Pure Echo</h3><p>Kejujuran, kemurnian pesan, dan identitas yang berakar.</p></article></section>
-<section id="memberWelcome" class="member-welcome hidden"></section><section id="serviceInfo" class="card" style="margin-bottom:20px"><div class="kicker">INFO LAYANAN</div><h3>Kontak, Denda & Pengantaran</h3><p id="serviceInfoText">Memuat informasi layanan...</p></section>
-<section id="collectionSection"><div class="section-head"><div><div class="kicker">PERPUSTAKAAN FISIK</div><h2>Koleksi Buku</h2><p id="collectionSummary">Lihat dan ajukan peminjaman koleksi fisik.</p></div></div><div class="filters card"><input id="guestSearch" placeholder="Cari judul/penulis..."><select id="guestCategory"></select><select id="guestLevel"></select></div><div id="guestBooks" class="book-grid"></div></section>
-<section class="online-library digital-library-section"><div class="digital-library-hero"><div><div class="kicker gold">PERPUSTAKAAN DIGITAL</div><h2>Rak Buku Online Echo of Mobon</h2><p>Pilih buku dari rak, lihat covernya, lalu baca PDF atau bacaan digital langsung dari HP.</p></div><div class="digital-library-badge"><b id="digitalCount">0</b><span>Buku Online</span></div></div><div class="digital-library-tools"><input id="digitalSearch" placeholder="Cari buku online, penulis, atau kategori..."><select id="digitalCategoryFilter"><option value="">Semua kategori</option></select></div><div class="bookshelf-frame"><div class="bookshelf-top"><span>RAK DIGITAL</span><small>Echo of Mobon · Literasi Suara Fayfiye</small></div><div id="digitalLibrary" class="digital-shelves"></div></div></section>
-<section id="myHistorySection" class="hidden"><div class="section-head"><div><div class="kicker">AKUN ANGGOTA</div><h2>Riwayat Peminjaman Saya</h2></div></div><div id="myHistory" class="table-wrap"></div></section></main>
-<dialog id="guestDialog"><form id="guestForm" class="modal"><button class="close" type="button" data-close="guestDialog">×</button><h2>Buku Tamu</h2><div class="form"><label>Nama<input id="guestName" required></label><label>No HP<input id="guestPhone" required></label><label>Alamat<textarea id="guestAddress" required></textarea></label><div class="grid2"><label>Status<select id="guestStatus"><option>Pelajar</option><option>Mahasiswa</option><option>Guru</option><option>Masyarakat</option><option>Lainnya</option></select></label><label>Tujuan<select id="guestPurpose"><option>Melihat Koleksi</option><option>Meminjam Buku</option><option>Membaca Buku Online</option><option>Literasi / Belajar</option></select></label></div><button class="btn primary">Simpan</button></div></form></dialog>
-<dialog id="memberJoinDialog"><form id="memberJoinForm" class="modal"><button class="close" type="button" data-close="memberJoinDialog">×</button><div class="kicker">KEANGGOTAAN</div><h2>Daftar Anggota Echo of Mobon</h2><div class="form"><label>Foto<input id="joinPhoto" type="file" accept="image/*"></label><img id="joinPhotoPreview" class="member-photo-preview hidden"><label>Nomor Anggota Otomatis<input id="joinMemberNo" readonly></label><label>Nama Lengkap<input id="joinName" required></label><label>No HP / WhatsApp<input id="joinPhone" required></label><label>Alamat<textarea id="joinAddress" required></textarea></label><label>Status<select id="joinRole"><option>Pelajar</option><option>Mahasiswa</option><option>Guru</option><option>Dosen</option><option>Masyarakat</option><option>Pegawai</option><option>Komunitas</option><option>Lainnya</option></select></label><button class="btn primary">Daftar & Buat Kartu</button></div></form></dialog>
-<dialog id="borrowDialog"><form id="borrowForm" class="modal"><button class="close" type="button" data-close="borrowDialog">×</button><h2>Ajukan Peminjaman</h2><p id="borrowBookLabel"></p><input id="borrowBookId" type="hidden"><div class="form"><p id="borrowIdentityNote" class="muted"></p><div id="borrowRules" class="card" style="padding:12px"></div><div class="grid2"><label>Tanggal Pinjam<input id="borrowDate" type="date" required></label><label>Rencana Kembali<input id="returnDate" type="date" required></label></div><label style="display:flex;gap:10px;align-items:center"><input id="deliveryRequested" type="checkbox" style="width:auto"> Minta buku diantar</label><div id="deliveryFields" class="hidden"><label>Alamat Pengantaran<textarea id="deliveryAddress" placeholder="Tulis alamat lengkap penerima"></textarea></label><p id="deliveryFeeNote" class="muted"></p></div><label>Catatan<textarea id="borrowNote"></textarea></label><button class="btn primary">Kirim Permohonan</button></div></form></dialog>
-<dialog id="readerDialog" class="reader-dialog"><div class="modal reader-modal reading-room"><button class="close" data-close="readerDialog">×</button><div class="reader-book-head"><div id="readerCoverWrap" class="reader-cover-wrap"></div><div class="reader-book-info"><div class="kicker gold">RUANG BACA DIGITAL</div><h2 id="readerTitle"></h2><p id="readerMeta"></p><div id="readerBadges" class="chips"></div><div class="reader-actions"><a id="readerPdfOpen" class="btn primary hidden" target="_blank" rel="noopener">Buka PDF Layar Penuh</a><button id="readerFontBtn" class="btn ghost">Perbesar Teks A+</button></div></div></div><div class="reader-screen"><iframe id="readerPdfFrame" class="reader-pdf hidden" title="Pembaca PDF Echo of Mobon"></iframe><article id="readerContent" class="reader-content"></article></div></div></dialog>
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#174d68">
+  <meta name="description" content="Echo of Mobon — ruang literasi fisik dan digital untuk membaca, mendengar, belajar, dan berbagi cerita.">
+  <title>Echo of Mobon — Literasi Suara Fayfiye</title>
+  <link rel="icon" href="assets/echo-of-mobon-logo.jpg?v=8">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/theme-original.css?v=20261101-9">
+  <link rel="stylesheet" href="assets/member-card-v2.css?v=20261102-1">
+  <link rel="stylesheet" href="assets/portal-v2.css?v=20261102-1">
+  <link rel="stylesheet" href="assets/classic-v3.css?v=20261102-1">
+</head>
+<body class="eom-v3">
+<header class="topbar">
+  <a class="brand" href="./" aria-label="Echo of Mobon">
+    <img src="assets/echo-of-mobon-logo.jpg?v=8" alt="Logo Echo of Mobon">
+    <div><strong>Echo of Mobon</strong><small>Literasi Suara Fayfiye</small></div>
+  </a>
+  <nav class="topnav" aria-label="Navigasi utama">
+    <a href="#home" data-i18n="home">Beranda</a>
+    <a href="#physical" data-i18n="physical">Buku Fisik</a>
+    <a href="#digital" data-i18n="digital">Buku Digital</a>
+    <a href="#english" data-i18n="learn">Belajar Inggris</a>
+    <a href="#community" data-i18n="community">Ruang Komunitas</a>
+    <a href="#mobon-listens" data-i18n="listen">Mobon Mendengar</a>
+    <select id="languageSelect" class="language-select" aria-label="Bahasa">
+      <option value="id">🇮🇩 Indonesia</option>
+      <option value="en">🇬🇧 English</option>
+      <option value="ru">🇷🇺 Русский</option>
+      <option value="zh">🇨🇳 中文</option>
+      <option value="ko">🇰🇷 한국어</option>
+    </select>
+    <a href="./admin/" data-i18n="admin">Admin</a>
+  </nav>
+</header>
+
+<section id="home" class="classic-hero">
+  <div class="classic-hero-inner">
+    <div>
+      <div class="eyebrow" data-i18n="welcomeEyebrow">RUANG LITERASI · PENGETAHUAN · CERITA</div>
+      <h1>Echo of<br>Mobon</h1>
+      <p class="hero-copy" data-i18n="welcomeCopy">Temukan buku, dengarkan bacaan, belajar bahasa, dan berbagi cerita dalam satu ruang literasi yang tenang dan hidup.</p>
+      <p class="hero-quote" data-i18n="welcomeQuote">Hening namun menggelegar. Tersembunyi namun memengaruhi.</p>
+      <div class="hero-actions">
+        <button id="guestEntryBtn" class="btn primary" type="button" data-i18n="guestEntry">Masuk sebagai Tamu</button>
+        <button id="joinMemberBtn" class="btn ghost" type="button" data-i18n="joinMember">Daftar Anggota</button>
+        <button id="myCardBtn" class="btn ghost hidden" type="button">Kartu Saya</button>
+      </div>
+    </div>
+    <div class="hero-emblem" aria-hidden="true"><img src="assets/echo-of-mobon-logo.jpg?v=8" alt=""></div>
+  </div>
+</section>
+
+<section class="entry-strip" aria-label="Akses cepat">
+  <button class="entry-card" id="guestEntryCard" type="button" onclick="document.getElementById('guestEntryBtn').click()"><span class="entry-icon">𓂀</span><strong data-i18n="guestEntry">Masuk sebagai Tamu</strong><small data-i18n="guestEntrySub">Isi buku tamu dan jelajahi ruang literasi.</small></button>
+  <button class="entry-card" type="button" onclick="document.getElementById('joinMemberBtn').click()"><span class="entry-icon">🏛️</span><strong data-i18n="joinMember">Daftar Anggota</strong><small data-i18n="joinMemberSub">Buat kartu anggota dan riwayat peminjaman.</small></button>
+  <button class="entry-card" id="scanBookBtn" type="button"><span class="entry-icon">▦</span><strong data-i18n="scanBook">Scan Buku</strong><small data-i18n="scanBookSub">Scan ISBN/QR untuk melihat detail buku.</small></button>
+  <button class="entry-card" id="myLibraryBtn" type="button"><span class="entry-icon">📚</span><strong data-i18n="myLibrary">Rak Saya</strong><small data-i18n="myLibrarySub">Buku yang pernah Anda mulai baca.</small></button>
+</section>
+
+<main>
+  <section class="section-shell">
+    <div class="section-head-v3"><div><div class="kicker-v3">THE SILENT SANCTUARY</div><h2 data-i18n="explore">Jelajahi Echo of Mobon</h2><p class="muted-v3" data-i18n="exploreSub">Satu ruang untuk membaca, mendengar, belajar, dan terhubung.</p></div></div>
+    <div class="feature-grid">
+      <article class="feature-card"><div class="feature-icon">🎧</div><h3 data-i18n="featAudio">Audiobook & Baca Nyaring</h3><p data-i18n="featAudioSub">Dengarkan bacaan digital dengan suara yang tersedia di perangkat.</p></article>
+      <article class="feature-card"><div class="feature-icon">𐎠</div><h3 data-i18n="featLang">5 Bahasa Antarmuka</h3><p data-i18n="featLangSub">Indonesia, Inggris, Rusia, Mandarin, dan Korea.</p></article>
+      <article class="feature-card"><div class="feature-icon">⌁</div><h3 data-i18n="featScan">Pemindai Buku</h3><p data-i18n="featScanSub">Kenali ISBN dan tampilkan metadata buku dengan cepat.</p></article>
+      <article class="feature-card"><div class="feature-icon">◌</div><h3 data-i18n="featCommunity">Ruang Percakapan</h3><p data-i18n="featCommunitySub">Berbagi ide dan berdiskusi dengan pengunjung lain.</p></article>
+    </div>
+  </section>
+
+  <section id="memberWelcome" class="section-shell member-welcome hidden"></section>
+
+  <section id="my-shelf" class="section-shell">
+    <div class="section-head-v3"><div><div class="kicker-v3">PERSONAL READING</div><h2 data-i18n="myShelf">Rak Baca Saya</h2><p class="muted-v3" data-i18n="myShelfSub">Buku otomatis masuk ke sini saat Anda mulai membacanya, meski belum selesai.</p></div></div>
+    <div id="myLibrary" class="my-library-grid"></div>
+  </section>
+
+  <section id="physical" class="section-shell">
+    <div class="section-head-v3"><div><div class="kicker-v3">PERPUSTAKAAN FISIK</div><h2 data-i18n="physicalTitle">Perpustakaan Fisik</h2><p id="collectionSummary" class="muted-v3" data-i18n="physicalSub">Cari koleksi fisik, lihat ketersediaan, lalu ajukan peminjaman.</p></div></div>
+    <section id="serviceInfo" class="card" style="padding:14px;margin-bottom:16px"><strong>Info Layanan</strong><p id="serviceInfoText" style="margin:5px 0 0">Memuat informasi layanan...</p></section>
+    <div class="filters card"><input id="guestSearch" placeholder="Cari judul/penulis..."><select id="guestCategory"></select><select id="guestLevel"></select></div>
+    <div id="guestBooks" class="book-grid" style="margin-top:16px"></div>
+  </section>
+
+  <section id="digital" class="section-shell online-library digital-library-section">
+    <div class="section-head-v3"><div><div class="kicker-v3">PERPUSTAKAAN DIGITAL</div><h2 data-i18n="digitalTitle">Perpustakaan Digital</h2><p class="muted-v3" data-i18n="digitalSub">Baca PDF atau teks digital yang tersedia secara legal.</p></div><div class="digital-library-badge"><b id="digitalCount">0</b><span>Buku Online</span></div></div>
+    <div class="digital-library-tools"><input id="digitalSearch" placeholder="Cari buku online, penulis, atau kategori..."><select id="digitalCategoryFilter"><option value="">Semua kategori</option></select></div>
+    <div class="bookshelf-frame"><div class="bookshelf-top"><span>RAK DIGITAL</span><small>Echo of Mobon · Literasi Suara Fayfiye</small></div><div id="digitalLibrary" class="digital-shelves"></div></div>
+  </section>
+
+  <section id="english" class="section-shell learning-panel">
+    <div class="section-head-v3"><div><div class="kicker-v3">LEARN · LISTEN · SPEAK</div><h2 data-i18n="englishTitle">English Learning Room</h2><p class="muted-v3" data-i18n="englishSub">Latihan singkat untuk kosakata, pengucapan, dan kalimat sehari-hari.</p></div></div>
+    <div id="englishLesson" class="learning-grid"></div>
+  </section>
+
+  <section id="community" class="section-shell">
+    <div class="section-head-v3"><div><div class="kicker-v3">THE AGORA</div><h2 data-i18n="communityTitle">Ruang Komunitas Echo</h2><p class="muted-v3" data-i18n="communitySub">Ruang percakapan publik yang santun. Jangan bagikan data pribadi, kata sandi, atau informasi sensitif.</p></div><button id="communityRefreshBtn" class="btn ghost" type="button" data-i18n="refresh">Muat Ulang</button></div>
+    <div class="community-layout">
+      <div id="communityFeed" class="community-feed"></div>
+      <form id="communityForm" class="compose-card form">
+        <div class="kicker-v3">TULIS PESAN</div>
+        <label><span data-i18n="displayName">Nama Tampil</span><input id="communityName" maxlength="40" required></label>
+        <label><span data-i18n="message">Pesan</span><textarea id="communityMessage" maxlength="600" rows="6" required></textarea></label>
+        <button id="communityReplyNote" class="hidden" type="button" style="border:0;background:rgba(23,77,104,.08);padding:8px;border-radius:10px;text-align:left;cursor:pointer"></button>
+        <button class="btn primary" type="submit" data-i18n="send">Kirim</button>
+      </form>
+    </div>
+  </section>
+
+  <section id="mobon-listens" class="section-shell">
+    <div class="section-head-v3"><div><div class="kicker-v3">A QUIET PLACE TO BE HEARD</div><h2 data-i18n="listenTitle">Mobon Mendengar</h2><p class="muted-v3" data-i18n="listenSub">Ruang untuk menulis pengalaman hidup, keresahan, harapan, atau cerita yang ingin Anda keluarkan dari hati.</p></div></div>
+    <div class="listening-layout">
+      <div class="listening-intro"><div class="privacy-note">🔒 <span data-i18n="privacy">Cerita dikirim secara privat dan hanya dapat dibaca pengelola. Cerita tidak akan dipublikasikan tanpa pilihan dan persetujuan Anda.</span></div><blockquote>“Kadang manusia tidak membutuhkan jawaban lebih dulu. Ia hanya membutuhkan ruang yang cukup tenang untuk didengar.”</blockquote><p class="muted-v3">Mobon Mendengar bukan layanan darurat atau pengganti bantuan profesional. Ruang ini dibuat untuk berbagi cerita secara manusiawi dan privat.</p></div>
+      <form id="mobonListenForm" class="listening-card form">
+        <label><span data-i18n="yourNameOptional">Nama (opsional)</span><input id="listenName" maxlength="60"></label>
+        <label><span data-i18n="yourStory">Ceritakan pengalaman Anda</span><textarea id="listenStory" rows="9" minlength="20" maxlength="4000" required></textarea></label>
+        <label style="display:flex;gap:9px;align-items:flex-start"><input id="listenWantsResponse" type="checkbox" style="width:auto;margin-top:4px"><span data-i18n="wantsResponse">Saya ingin mendapat tanggapan dari pengelola</span></label>
+        <label id="listenContactWrap" class="hidden"><span data-i18n="contactOptional">Kontak (opsional)</span><input id="listenContact" maxlength="160"></label>
+        <label style="display:flex;gap:9px;align-items:flex-start"><input id="listenShareAnon" type="checkbox" style="width:auto;margin-top:4px"><span data-i18n="shareAnon">Saya bersedia cerita ini dipertimbangkan untuk dibagikan secara anonim</span></label>
+        <label id="listenConsentWrap" class="hidden" style="display:flex;gap:9px;align-items:flex-start"><input id="listenConsent" type="checkbox" style="width:auto;margin-top:4px"><span data-i18n="consent">Saya memahami dan menyetujui jika kutipan anonim dipublikasikan setelah moderasi</span></label>
+        <button class="btn primary" type="submit" data-i18n="sendStory">Kirim Cerita Secara Privat</button>
+        <p id="listenStatus" class="muted-v3"></p>
+      </form>
+    </div>
+  </section>
+
+  <section class="section-shell">
+    <div class="section-head-v3"><div><div class="kicker-v3">CONNECTED KNOWLEDGE</div><h2 data-i18n="integrations">Sumber Buku Terhubung</h2><p class="muted-v3" data-i18n="integrationsSub">Echo of Mobon menggunakan sumber metadata resmi/terbuka untuk membantu mengenali buku.</p></div></div>
+    <div class="integration-row">
+      <article class="integration-card"><strong data-i18n="openLibrary">Open Library</strong><small>Metadata ISBN, penulis, penerbit, cover, dan tautan katalog terbuka.</small></article>
+      <article class="integration-card"><strong data-i18n="googleBooks">Google Books</strong><small>Metadata publik sebagai sumber pembanding ketika informasi ISBN tersedia.</small></article>
+      <article class="integration-card"><strong data-i18n="perpusnas">Perpusnas</strong><small data-i18n="perpusnasNote">Koneksi resmi tertentu memerlukan akun/token penerbit; tidak digunakan tanpa izin.</small></article>
+    </div>
+  </section>
+
+  <section id="myHistorySection" class="section-shell hidden"><div class="section-head-v3"><div><div class="kicker-v3">AKUN ANGGOTA</div><h2>Riwayat Peminjaman Saya</h2></div></div><div id="myHistory" class="table-wrap"></div></section>
+</main>
+
+<footer class="eom-footer"><span data-i18n="footer">Echo of Mobon · Literasi Suara Fayfiye</span><span>An Island of Peace, Unseen by the Eyes, Heard by the Universe.</span></footer>
+
+<dialog id="languageDialog"><div class="modal lang-welcome"><button class="close" type="button" data-close="languageDialog">×</button><img src="assets/echo-of-mobon-logo.jpg?v=8" alt="" style="width:82px;height:82px;border-radius:50%;object-fit:cover"><div class="kicker-v3" style="margin-top:12px">WELCOME</div><h2 data-i18n="chooseLanguage">Pilih Bahasa</h2><p class="muted-v3" data-i18n="chooseLanguageSub">Bahasa utama Echo of Mobon adalah Indonesia. Anda dapat menggantinya kapan saja.</p><div class="lang-grid"><button class="lang-choice" data-language-choice="id" type="button"><strong>🇮🇩 Indonesia</strong><small>Bahasa utama</small></button><button class="lang-choice" data-language-choice="en" type="button"><strong>🇬🇧 English</strong><small>English interface</small></button><button class="lang-choice" data-language-choice="ru" type="button"><strong>🇷🇺 Русский</strong><small>Русский интерфейс</small></button><button class="lang-choice" data-language-choice="zh" type="button"><strong>🇨🇳 中文</strong><small>中文界面</small></button><button class="lang-choice" data-language-choice="ko" type="button"><strong>🇰🇷 한국어</strong><small>한국어 인터페이스</small></button></div><button id="languageContinueBtn" class="btn ghost" type="button" style="margin-top:14px" data-i18n="continue">Lanjutkan</button></div></dialog>
+
+<dialog id="scanDialog"><div class="modal"><button class="close" type="button" data-close="scanDialog">×</button><div class="kicker-v3">BOOK IDENTIFIER</div><h2 data-i18n="scanTitle">Scan & Kenali Buku</h2><p class="muted-v3" data-i18n="scanHelp">Arahkan kamera ke barcode ISBN atau unggah foto barcode. Jika pemindaian tidak didukung perangkat, masukkan ISBN secara manual.</p><div class="form"><label><span data-i18n="takePhoto">Ambil / Pilih Foto Barcode</span><input id="scanFile" type="file" accept="image/*" capture="environment"></label><label><span data-i18n="isbnManual">Masukkan ISBN</span><input id="scanIsbnInput" inputmode="numeric" placeholder="978... / ISBN"></label><button id="scanLookupBtn" class="btn primary" type="button" data-i18n="lookup">Cari Detail</button><div id="scanResult"><div class="muted-v3" data-i18n="scanNoResult">Belum ada detail buku yang ditemukan.</div></div></div></div></dialog>
+
+<dialog id="guestDialog"><form id="guestForm" class="modal"><button class="close" type="button" data-close="guestDialog">×</button><div class="kicker-v3">WELCOME TO MOBON</div><h2>Buku Tamu</h2><div class="form"><label>Nama<input id="guestName" required></label><label>No HP / WhatsApp<input id="guestPhone" required></label><label>Alamat<textarea id="guestAddress" required></textarea></label><div class="grid2"><label>Status<select id="guestStatus"><option>Pelajar</option><option>Mahasiswa</option><option>Guru</option><option>Masyarakat</option><option>Lainnya</option></select></label><label>Tujuan<select id="guestPurpose"><option>Melihat Koleksi</option><option>Meminjam Buku</option><option>Membaca Buku Online</option><option>Literasi / Belajar</option></select></label></div><button class="btn primary">Masuk & Jelajahi</button></div></form></dialog>
+
+<dialog id="memberJoinDialog"><form id="memberJoinForm" class="modal"><button class="close" type="button" data-close="memberJoinDialog">×</button><div class="kicker-v3">KEANGGOTAAN</div><h2>Daftar Anggota Echo of Mobon</h2><div class="form"><label>Foto<input id="joinPhoto" type="file" accept="image/*"></label><img id="joinPhotoPreview" class="member-photo-preview hidden" alt="Preview foto"><label>Nomor Anggota Otomatis<input id="joinMemberNo" readonly></label><label>Nama Lengkap<input id="joinName" required></label><label>No HP / WhatsApp<input id="joinPhone" required></label><label>Alamat<textarea id="joinAddress" required></textarea></label><label>Status<select id="joinRole"><option>Pelajar</option><option>Mahasiswa</option><option>Guru</option><option>Dosen</option><option>Masyarakat</option><option>Pegawai</option><option>Komunitas</option><option>Lainnya</option></select></label><button class="btn primary">Daftar & Buat Kartu</button></div></form></dialog>
+
+<dialog id="borrowDialog"><form id="borrowForm" class="modal"><button class="close" type="button" data-close="borrowDialog">×</button><div class="kicker-v3">PEMINJAMAN</div><h2>Ajukan Peminjaman</h2><p id="borrowBookLabel"></p><input id="borrowBookId" type="hidden"><div class="form"><p id="borrowIdentityNote" class="muted"></p><div id="borrowRules" class="card" style="padding:12px"></div><div class="grid2"><label>Tanggal Pinjam<input id="borrowDate" type="date" required></label><label>Rencana Kembali<input id="returnDate" type="date" required></label></div><label style="display:flex;gap:10px;align-items:center"><input id="deliveryRequested" type="checkbox" style="width:auto"> Minta buku diantar</label><div id="deliveryFields" class="hidden"><label>Alamat Pengantaran<textarea id="deliveryAddress" placeholder="Tulis alamat lengkap penerima"></textarea></label><p id="deliveryFeeNote" class="muted"></p></div><label>Catatan<textarea id="borrowNote"></textarea></label><button class="btn primary">Kirim Permohonan</button></div></form></dialog>
+
+<dialog id="readerDialog" class="reader-dialog"><div class="modal reader-modal reading-room"><button class="close" data-close="readerDialog">×</button><div class="reader-book-head"><div id="readerCoverWrap" class="reader-cover-wrap"></div><div class="reader-book-info"><div class="kicker-v3">RUANG BACA DIGITAL</div><h2 id="readerTitle"></h2><p id="readerMeta"></p><div id="readerBadges" class="chips"></div><div class="reader-actions"><a id="readerPdfOpen" class="btn primary hidden" target="_blank" rel="noopener">Buka PDF Layar Penuh</a><button id="readerFontBtn" class="btn ghost">Perbesar Teks A+</button></div><div class="reader-audio-bar"><button id="readerAudioBtn" class="btn" type="button">🔊 <span data-i18n="audio">Dengarkan</span></button><button id="readerAudioStop" class="btn ghost" type="button" data-i18n="stopAudio">Berhenti</button><label style="margin:0"><span style="font-size:.78rem" data-i18n="voice">Suara</span><select id="readerVoiceSelect"></select></label></div></div></div><div class="reader-screen"><iframe id="readerPdfFrame" class="reader-pdf hidden" title="Pembaca PDF Echo of Mobon"></iframe><article id="readerContent" class="reader-content"></article></div></div></dialog>
+
 <dialog id="myCardDialog"><div class="modal"><button class="close" data-close="myCardDialog">×</button><div id="myCardContent"></div><button id="printMyCardBtn" class="btn primary">Cetak Kartu</button></div></dialog>
-<script src="assets/qrcode-mini.js"></script><script src="assets/supabase-online.js?v=20261101-8"></script><script src="assets/member-card-v2.js?v=20261102-1"></script><script src="assets/guest-online.js?v=20261101-8"></script><script src="assets/category-sync.js?v=20261102-1"></script><script src="assets/portal-v2.js?v=20261102-1"></script></body></html>
+
+<script src="assets/qrcode-mini.js"></script>
+<script src="assets/supabase-online.js?v=20261101-8"></script>
+<script src="assets/i18n-v3.js?v=20261102-1"></script>
+<script src="assets/book-metadata.js?v=20261102-1"></script>
+<script src="assets/member-card-v2.js?v=20261102-1"></script>
+<script src="assets/guest-online.js?v=20261101-8"></script>
+<script src="assets/category-sync.js?v=20261102-1"></script>
+<script src="assets/portal-v2.js?v=20261102-1"></script>
+<script src="assets/experience-v3.js?v=20261102-1"></script>
+</body>
+</html>
