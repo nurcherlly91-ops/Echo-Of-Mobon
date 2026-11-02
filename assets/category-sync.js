@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   loadCss('assets/bookshelf-fresh.css?v=20261102-1');
   loadCss('assets/member-card-premium.css?v=20261102-1');
   loadJs('assets/member-card-premium.js?v=20261102-1');
+  loadJs('assets/engagement-upgrade-v3.js?v=20261102-1');
 
   const getGuestIdentity=()=>{
     try{return JSON.parse(sessionStorage.getItem('eom_guest_online')||'null')}catch{return null}
