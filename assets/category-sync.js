@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded',async()=>{
   loadJs('assets/member-card-premium.js?v=20261102-1');
   loadJs('assets/engagement-upgrade-v3.js?v=20261102-1');
 
+  const brandSubtitle=document.querySelector('.topbar .brand small');
+  if(brandSubtitle)brandSubtitle.textContent='Suara Fayfiye';
+
   const getGuestIdentity=()=>{
     try{return JSON.parse(sessionStorage.getItem('eom_guest_online')||'null')}catch{return null}
   };
