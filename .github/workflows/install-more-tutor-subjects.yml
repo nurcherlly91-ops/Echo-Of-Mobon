@@ -1,0 +1,96 @@
+name: Install More Mobon AI Tutor Subjects
+
+on:
+  push:
+    paths:
+      - '.github/workflows/install-more-tutor-subjects.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Add subjects and lessons
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          # 1) Add subject buttons to the guest homepage.
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          anchor = '<button class="eom-subject" type="button" data-subject="reading">🔤 Membaca & Mengeja</button>'
+          extra = '''<button class="eom-subject" type="button" data-subject="indonesian">📝 Bahasa Indonesia</button>
+        <button class="eom-subject" type="button" data-subject="civics">🇮🇩 PPKn</button>
+        <button class="eom-subject" type="button" data-subject="informatics">💻 Informatika</button>
+        <button class="eom-subject" type="button" data-subject="history">🏺 Sejarah & Budaya</button>
+        <button class="eom-subject" type="button" data-subject="geography">🗺️ Geografi</button>
+        <button class="eom-subject" type="button" data-subject="economics">💰 Ekonomi</button>
+        <button class="eom-subject" type="button" data-subject="arts">🎨 Seni & Kreativitas</button>'''
+          if 'data-subject="indonesian"' not in s:
+              s = s.replace(anchor, anchor + '\n        ' + extra, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # 2) Extend the local tutor knowledge and routing.
+          p = Path('assets/literacy-adventure-v1.js')
+          s = p.read_text(encoding='utf-8')
+          old_subject_end = " reading:{label:'Membaca & Mengeja',welcome:'Kita belajar membaca pelan-pelan. Tulis sebuah kata dan aku bantu memecahnya menjadi suku kata.',prompts:['Eja “matahari”','Eja “sekolah”','Latihan huruf vokal']}\n};"
+          new_subject_end = """ reading:{label:'Membaca & Mengeja',welcome:'Kita belajar membaca pelan-pelan. Tulis sebuah kata dan aku bantu memecahnya menjadi suku kata.',prompts:['Eja “matahari”','Eja “sekolah”','Latihan huruf vokal']},
+ indonesian:{label:'Bahasa Indonesia',welcome:'Kita belajar Bahasa Indonesia: ide pokok, kalimat, sinonim, antonim, tanda baca, dan menulis sederhana.',prompts:['Apa itu ide pokok?','Contoh sinonim dan antonim','Buat kalimat efektif']},
+ civics:{label:'PPKn',welcome:'Kita belajar PPKn: Pancasila, hak dan kewajiban, gotong royong, aturan, serta menghargai keberagaman.',prompts:['Sebutkan sila Pancasila','Apa beda hak dan kewajiban?','Mengapa gotong royong penting?']},
+ informatics:{label:'Informatika',welcome:'Kita belajar Informatika dan komputer: perangkat keras, internet aman, algoritma, data, serta dasar coding.',prompts:['Apa itu algoritma?','Bedanya hardware dan software','Cara aman menggunakan internet']},
+ history:{label:'Sejarah & Budaya',welcome:'Kita belajar sejarah dan budaya: peristiwa masa lalu, sumber sejarah, warisan budaya, dan cara menjaga budaya daerah.',prompts:['Apa itu sumber sejarah?','Mengapa budaya perlu dilestarikan?','Apa arti proklamasi?']},
+ geography:{label:'Geografi',welcome:'Kita belajar Geografi: peta, benua, iklim, gunung, laut, koordinat, dan hubungan manusia dengan lingkungan.',prompts:['Apa itu garis lintang?','Sebutkan benua di dunia','Apa beda cuaca dan iklim?']},
+ economics:{label:'Ekonomi',welcome:'Kita belajar Ekonomi: kebutuhan, keinginan, produksi, distribusi, konsumsi, menabung, dan kegiatan jual beli.',prompts:['Apa beda kebutuhan dan keinginan?','Jelaskan produksi distribusi konsumsi','Mengapa perlu menabung?']},
+ arts:{label:'Seni & Kreativitas',welcome:'Kita belajar seni dan kreativitas: warna, bentuk, ritme, poster, cerita, serta latihan membuat karya sederhana.',prompts:['Apa itu warna primer?','Cara membuat poster menarik','Beri latihan kreativitas']}
+};"""
+          if "indonesian:{label:'Bahasa Indonesia'" not in s:
+              if old_subject_end not in s:
+                  raise SystemExit('subjectData anchor not found')
+              s = s.replace(old_subject_end, new_subject_end, 1)
+
+          funcs = r'''
+function indonesianAnswer(q){const l=q.toLowerCase();if(l.includes('ide pokok')||l.includes('gagasan utama'))return 'Ide pokok adalah gagasan utama yang menjadi inti sebuah paragraf. Cara mencarinya: baca seluruh paragraf, cari kalimat yang paling umum, lalu simpulkan inti pembahasannya.';if(l.includes('sinonim'))return 'Sinonim adalah kata yang maknanya mirip. Contoh: indah = elok, pintar = cerdas, senang = gembira.';if(l.includes('antonim'))return 'Antonim adalah kata yang maknanya berlawanan. Contoh: besar ↔ kecil, cepat ↔ lambat, terang ↔ gelap.';if(l.includes('kalimat efektif'))return 'Kalimat efektif menyampaikan gagasan dengan jelas, hemat kata, logis, dan sesuai tata bahasa. Contoh: “Siswa membaca buku di perpustakaan.”';if(l.includes('tanda baca'))return 'Tanda titik (.) mengakhiri kalimat berita, koma (,) memberi jeda atau memisahkan unsur, tanda tanya (?) untuk pertanyaan, dan tanda seru (!) untuk perintah atau seruan.';return 'Kamu bisa bertanya tentang ide pokok, kalimat efektif, sinonim, antonim, tanda baca, paragraf, atau latihan menulis.';}
+function civicsAnswer(q){const l=q.toLowerCase();if(l.includes('pancasila')||l.includes('sila'))return 'Lima sila Pancasila: 1) Ketuhanan Yang Maha Esa, 2) Kemanusiaan yang Adil dan Beradab, 3) Persatuan Indonesia, 4) Kerakyatan yang Dipimpin oleh Hikmat Kebijaksanaan dalam Permusyawaratan/Perwakilan, 5) Keadilan Sosial bagi Seluruh Rakyat Indonesia.';if(l.includes('hak')||l.includes('kewajiban'))return 'Hak adalah sesuatu yang patut kita terima, sedangkan kewajiban adalah sesuatu yang harus kita lakukan. Contoh di sekolah: hak mendapat pelajaran, kewajiban menaati tata tertib dan menghormati orang lain.';if(l.includes('gotong royong'))return 'Gotong royong berarti bekerja bersama untuk kepentingan bersama. Nilainya antara lain kebersamaan, kepedulian, tanggung jawab, dan saling membantu.';if(l.includes('keberagaman')||l.includes('perbedaan'))return 'Keberagaman harus dihargai karena masyarakat memiliki suku, bahasa, budaya, dan kebiasaan yang berbeda. Sikap yang baik adalah menghormati, tidak merendahkan, dan mau bekerja sama.';return 'Tanyakan tentang Pancasila, hak dan kewajiban, aturan, musyawarah, gotong royong, persatuan, atau keberagaman.';}
+function informaticsAnswer(q){const l=q.toLowerCase();if(l.includes('algoritma'))return 'Algoritma adalah urutan langkah yang jelas untuk menyelesaikan masalah. Contoh membuat teh: siapkan gelas, masukkan teh, tuang air panas, tambahkan gula bila perlu, lalu aduk.';if(l.includes('hardware')||l.includes('perangkat keras'))return 'Hardware atau perangkat keras adalah bagian komputer yang dapat disentuh, seperti monitor, keyboard, mouse, penyimpanan, dan prosesor.';if(l.includes('software')||l.includes('perangkat lunak'))return 'Software atau perangkat lunak adalah program yang menjalankan tugas pada perangkat, misalnya sistem operasi, browser, pengolah kata, dan aplikasi belajar.';if(l.includes('internet')||l.includes('aman'))return 'Gunakan internet dengan aman: jangan membagikan kata sandi, cek sumber informasi, hindari tautan mencurigakan, jaga data pribadi, dan minta bantuan orang dewasa atau guru bila menemukan sesuatu yang tidak nyaman.';if(l.includes('coding')||l.includes('kode'))return 'Coding adalah menulis instruksi agar komputer melakukan tugas. Konsep awal yang penting: urutan, kondisi “jika”, pengulangan, variabel, dan fungsi.';return 'Tanyakan tentang algoritma, hardware, software, internet aman, data, atau dasar coding.';}
+function historyAnswer(q){const l=q.toLowerCase();if(l.includes('sumber sejarah'))return 'Sumber sejarah adalah bukti yang membantu kita memahami masa lalu. Bentuknya bisa tertulis, lisan, benda/artefak, foto, rekaman, dan bangunan.';if(l.includes('proklamasi'))return 'Proklamasi Kemerdekaan Indonesia dibacakan pada 17 Agustus 1945. Peristiwa itu menandai pernyataan kemerdekaan Indonesia kepada rakyat dan dunia.';if(l.includes('budaya')||l.includes('lestarikan')||l.includes('warisan'))return 'Budaya perlu dilestarikan karena menyimpan identitas, pengetahuan, nilai, bahasa, seni, dan pengalaman antargenerasi. Caranya antara lain belajar, mendokumentasikan, mempraktikkan dengan hormat, dan mengajarkannya kepada generasi berikutnya.';return 'Tanyakan tentang sumber sejarah, Proklamasi, sejarah lokal, warisan budaya, tradisi, atau cara menjaga budaya.';}
+function geographyAnswer(q){const l=q.toLowerCase();if(l.includes('lintang'))return 'Garis lintang adalah garis khayal yang mengukur posisi suatu tempat di utara atau selatan Khatulistiwa. Nilainya dinyatakan dalam derajat.';if(l.includes('benua'))return 'Secara umum dikenal tujuh benua: Asia, Afrika, Amerika Utara, Amerika Selatan, Antarktika, Eropa, dan Australia/Oseania.';if(l.includes('cuaca')||l.includes('iklim'))return 'Cuaca adalah kondisi udara dalam waktu singkat di suatu tempat, sedangkan iklim adalah pola cuaca rata-rata dalam jangka waktu panjang di wilayah yang lebih luas.';if(l.includes('peta'))return 'Peta menggambarkan permukaan bumi secara diperkecil. Unsur pentingnya antara lain judul, legenda, simbol, arah mata angin, dan skala.';if(l.includes('gunung')||l.includes('vulkan'))return 'Gunung api terbentuk karena aktivitas magma dari dalam Bumi. Wilayah di sekitar gunung api dapat memiliki tanah subur, tetapi juga perlu memahami risiko erupsi.';return 'Tanyakan tentang peta, benua, garis lintang dan bujur, cuaca dan iklim, gunung, laut, atau lingkungan.';}
+function economicsAnswer(q){const l=q.toLowerCase();if(l.includes('kebutuhan')||l.includes('keinginan'))return 'Kebutuhan adalah sesuatu yang penting untuk kehidupan dan kegiatan utama, sedangkan keinginan adalah sesuatu yang ingin dimiliki tetapi tidak selalu mendesak. Belajar membedakannya membantu mengatur uang.';if(l.includes('produksi')||l.includes('distribusi')||l.includes('konsumsi'))return 'Produksi adalah membuat barang/jasa, distribusi adalah menyalurkannya, dan konsumsi adalah menggunakan barang/jasa. Ketiganya saling berhubungan dalam kegiatan ekonomi.';if(l.includes('menabung'))return 'Menabung membantu menyiapkan dana untuk kebutuhan masa depan dan keadaan tak terduga. Caranya bisa dimulai dari menyisihkan sebagian uang secara rutin sebelum dibelanjakan.';if(l.includes('harga')||l.includes('jual')||l.includes('beli'))return 'Dalam jual beli, harga adalah nilai yang disepakati untuk barang atau jasa. Pembeli perlu membandingkan kebutuhan, kualitas, dan kemampuan membayar.';return 'Tanyakan tentang kebutuhan dan keinginan, produksi, distribusi, konsumsi, menabung, harga, pasar, atau usaha sederhana.';}
+function artsAnswer(q){const l=q.toLowerCase();if(l.includes('warna primer'))return 'Warna primer yang umum dalam pembelajaran seni rupa adalah merah, kuning, dan biru. Dari perpaduannya dapat dibuat berbagai warna lain.';if(l.includes('poster'))return 'Poster yang baik memiliki pesan singkat dan jelas, judul yang mudah dibaca, gambar yang relevan, kontras yang cukup, serta tata letak yang tidak terlalu penuh.';if(l.includes('ritme')||l.includes('irama'))return 'Ritme adalah pola pengulangan yang menimbulkan rasa gerak atau ketukan. Dalam musik ritme terdengar melalui ketukan; dalam seni rupa ritme dapat muncul lewat pengulangan bentuk, garis, atau warna.';if(l.includes('latihan')||l.includes('kreativ'))return 'Latihan kreativitas: pilih satu benda di sekitarmu, gambar dengan tiga bentuk dasar saja, lalu buat versi kedua dengan pola atau warna yang berbeda. Setelah itu beri judul pada karyamu.';return 'Tanyakan tentang warna, bentuk, poster, ritme, menggambar, cerita kreatif, atau minta latihan membuat karya.';}
+'''
+          tutor_old = "function tutorAnswer(q){if(subject==='math')return mathAnswer(q);if(subject==='english')return englishAnswer(q);if(subject==='science')return scienceAnswer(q);if(subject==='social')return socialAnswer(q);return readingAnswer(q);}"
+          tutor_new = "function tutorAnswer(q){if(subject==='math')return mathAnswer(q);if(subject==='english')return englishAnswer(q);if(subject==='science')return scienceAnswer(q);if(subject==='social')return socialAnswer(q);if(subject==='reading')return readingAnswer(q);if(subject==='indonesian')return indonesianAnswer(q);if(subject==='civics')return civicsAnswer(q);if(subject==='informatics')return informaticsAnswer(q);if(subject==='history')return historyAnswer(q);if(subject==='geography')return geographyAnswer(q);if(subject==='economics')return economicsAnswer(q);if(subject==='arts')return artsAnswer(q);return 'Pilih mata pelajaran lalu tulis pertanyaanmu.';}"
+          if 'function indonesianAnswer' not in s:
+              if tutor_old not in s:
+                  raise SystemExit('tutor routing anchor not found')
+              s = s.replace(tutor_old, funcs + '\n' + tutor_new, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # 3) Add the new subjects to one-minute practice as well.
+          p = Path('assets/literacy-engagement-v2.js')
+          s = p.read_text(encoding='utf-8')
+          marker = " {s:'Membaca',q:'Huruf vokal dalam bahasa Indonesia adalah ...',a:['a, i, u, e, o','b, c, d, f, g','k, l, m, n, p'],c:0,e:'Huruf vokal: a, i, u, e, o.'}"
+          replacement = marker + ",\n {s:'Bahasa Indonesia',q:'Kata yang memiliki makna berlawanan disebut ...',a:['Sinonim','Antonim','Akronim'],c:1,e:'Antonim adalah kata yang memiliki makna berlawanan.'},\n {s:'PPKn',q:'Dasar negara Indonesia adalah ...',a:['Pancasila','Peta','Proklamasi'],c:0,e:'Pancasila adalah dasar negara Indonesia.'},\n {s:'Informatika',q:'Bagian komputer yang dapat disentuh disebut ...',a:['Hardware','Software','Internet'],c:0,e:'Hardware adalah perangkat keras yang dapat disentuh.'},\n {s:'Sejarah & Budaya',q:'Proklamasi Kemerdekaan Indonesia dibacakan pada ...',a:['17 Agustus 1945','28 Oktober 1928','1 Juni 1945'],c:0,e:'Proklamasi Kemerdekaan Indonesia dibacakan pada 17 Agustus 1945.'},\n {s:'Geografi',q:'Arah mata angin yang berlawanan dengan utara adalah ...',a:['Timur','Selatan','Barat'],c:1,e:'Selatan berlawanan dengan utara.'},\n {s:'Ekonomi',q:'Kegiatan membuat barang atau jasa disebut ...',a:['Produksi','Distribusi','Konsumsi'],c:0,e:'Produksi adalah kegiatan menghasilkan barang atau jasa.'},\n {s:'Seni',q:'Merah, kuning, dan biru dikenal sebagai ...',a:['Warna primer','Warna netral','Warna gelap'],c:0,e:'Dalam pembelajaran seni rupa, merah, kuning, dan biru dikenal sebagai warna primer.'}"
+          if "{s:'PPKn',q:" not in s:
+              if marker not in s:
+                  raise SystemExit('qbank anchor not found')
+              s = s.replace(marker, replacement, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets/literacy-adventure-v1.js assets/literacy-engagement-v2.js
+          if git diff --cached --quiet; then
+            echo "No changes needed"
+          else
+            git commit -m "feat: expand Mobon AI Tutor subjects and lessons"
+            git push origin main
+          fi
