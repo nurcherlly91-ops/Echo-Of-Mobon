@@ -15,108 +15,27 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
-      - name: Install literacy hub into guest homepage
+      - name: Install into guest homepage
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('index.html')
-          text=p.read_text(encoding='utf-8')
+          p = Path('index.html')
+          text = p.read_text(encoding='utf-8')
+          frag = Path('assets/literacy-hub-fragment.html').read_text(encoding='utf-8')
 
-          css='  <link rel="stylesheet" href="assets/literacy-adventure-v1.css?v=20261102-1">\n'
           if 'literacy-adventure-v1.css' not in text:
-              text=text.replace('</head>',css+'</head>')
-
+              text = text.replace('</head>', '  <link rel="stylesheet" href="assets/literacy-adventure-v1.css?v=20261102-1">\n</head>')
           if 'href="#literacy-hub"' not in text:
-              text=text.replace('    <a href="#home" data-i18n="home">Beranda</a>','    <a href="#home" data-i18n="home">Beranda</a>\n    <a href="#literacy-hub">Belajar & Misi</a>')
-
-          slogan='      <p class="mobon-slogan">An Island of Peace, Unseen by the Eyes, Heard by the Universe</p>\n'
+              text = text.replace('    <a href="#home" data-i18n="home">Beranda</a>', '    <a href="#home" data-i18n="home">Beranda</a>\n    <a href="#literacy-hub">Belajar & Misi</a>')
           if 'class="mobon-slogan"' not in text:
-              text=text.replace('      <h1>Echo of<br>Mobon</h1>\n','      <h1>Echo of<br>Mobon</h1>\n'+slogan)
-
-          hub=r'''
-  <section id="literacy-hub" class="section-shell eom-playground">
-    <div class="eom-adventure-head">
-      <div><div class="kicker-v3">DISCOVER · LEARN · CREATE</div><h2>Ruang Petualangan Literasi</h2><p class="muted-v3">Membaca bukan sekadar membuka buku. Setiap halaman adalah jejak, setiap cerita adalah perjalanan. Pilih jalurmu dan mulai dari hal kecil hari ini.</p></div>
-      <div class="eom-points-pill" title="Poin tersimpan di perangkat ini"><b id="eomPoints">0</b><span>Poin Jejak Mobon</span></div>
-    </div>
-
-    <div class="eom-audience-tabs" aria-label="Pilih jalur belajar">
-      <button class="eom-tab active" type="button" data-audience="anak">🧒 Anak-anak</button>
-      <button class="eom-tab" type="button" data-audience="pelajar">🎓 Pelajar</button>
-      <button class="eom-tab" type="button" data-audience="masyarakat">👨‍👩‍👧 Masyarakat & Keluarga</button>
-    </div>
-    <div id="audiencePanel" class="eom-audience-panel"></div>
-
-    <div class="eom-mission-grid">
-      <article class="eom-mission-card">
-        <div class="eom-card-icon">🧭</div><h3>Misi Membaca Hari Ini</h3><p id="missionTitle">Memuat misi...</p>
-        <div class="eom-progress" aria-label="Kemajuan misi"><span id="missionBar"></span></div>
-        <div class="eom-card-actions"><button id="completeMissionBtn" class="eom-mini-btn" type="button">Tandai selesai +10 poin</button></div>
-      </article>
-      <article class="eom-mission-card">
-        <div class="eom-card-icon">⏱️</div><h3>Baca 5 Menit Saja</h3><p><b id="fiveMinuteTitle"></b></p><p id="fiveMinuteText" class="eom-story-snippet"></p>
-        <div class="eom-card-actions"><button id="toggleFiveMinuteBtn" class="eom-mini-btn" type="button">Baca</button><button id="speakFiveMinuteBtn" class="eom-mini-btn alt" type="button">🔊 Dengarkan</button><button id="nextFiveMinuteBtn" class="eom-mini-btn alt" type="button">Cerita lain</button></div>
-      </article>
-      <article class="eom-mission-card">
-        <div class="eom-card-icon">🔤</div><h3>Satu Kata Hari Ini</h3><div id="wordToday" class="eom-word">Literasi</div><p>Kenali satu kata baru setiap hari, pahami artinya, lalu coba gunakan dalam kalimat.</p>
-        <div class="eom-card-actions"><button id="speakWordBtn" class="eom-mini-btn alt" type="button">🔊 Ucapkan</button></div>
-      </article>
-      <article class="eom-mission-card">
-        <div class="eom-card-icon">🗺️</div><h3>Peta Petualangan Literasi</h3><p>Pilih jejak untuk mendapatkan tema bacaan.</p><div class="eom-map"><button data-map="Maba">Maba</button><button data-map="Buli">Buli</button><button data-map="Wasile">Wasile</button><button data-map="Bicoli">Bicoli</button><button data-map="Mobon">Mobon</button></div><div id="mapFact" class="eom-map-note">Mulai dari satu tempat, lalu buka satu bacaan.</div>
-      </article>
-      <article class="eom-mission-card">
-        <div class="eom-card-icon">💭</div><h3>Rak Sesuai Suasana</h3><p>Apa yang ingin kamu rasakan atau pelajari sekarang?</p><div class="eom-mood-row"><button class="eom-mood" data-mood="cerita">😊 Ingin cerita</button><button class="eom-mood" data-mood="sains">🔬 Ingin tahu</button><button class="eom-mood" data-mood="sejarah">🏛️ Sejarah</button><button class="eom-mood" data-mood="anak">🌙 Sebelum tidur</button></div>
-      </article>
-      <article class="eom-mission-card">
-        <div class="eom-card-icon">🏅</div><h3>Gelar Jejak Mobon</h3><p>Kumpulkan poin dari membaca, misi, kuis, dan latihan belajar.</p><div id="eomBadges" class="eom-badge-row"></div>
-        <div class="eom-card-actions"><button class="eom-mini-btn alt" type="button" data-program="rewards">Lihat hadiah & gelar</button></div>
-      </article>
-    </div>
-
-    <section id="mobon-ai" class="eom-ai-shell" aria-label="Mobon AI Tutor">
-      <div class="eom-ai-head"><div><div class="kicker-v3" style="color:#e7cc88">MOBON AI TUTOR · BETA</div><h2>Teman Belajar Interaktif</h2><p>Tanya, latihan, dengarkan, dan coba lagi. Pilih pelajaran lalu tulis pertanyaan sederhana.</p></div><span class="eom-ai-status">Mode belajar aman</span></div>
-      <div class="eom-ai-subjects">
-        <button class="eom-subject active" type="button" data-subject="math">➗ Matematika</button>
-        <button class="eom-subject" type="button" data-subject="english">🇬🇧 Bahasa Inggris</button>
-        <button class="eom-subject" type="button" data-subject="science">🔬 IPA</button>
-        <button class="eom-subject" type="button" data-subject="social">🌏 IPS</button>
-        <button class="eom-subject" type="button" data-subject="reading">🔤 Membaca & Mengeja</button>
-      </div>
-      <div id="aiChat" class="eom-ai-chat" aria-live="polite"></div>
-      <div id="aiQuickPrompts" class="eom-quick-prompts"></div>
-      <div class="eom-ai-compose"><input id="aiInput" autocomplete="off" placeholder="Tulis pertanyaan atau soal di sini..."><button id="aiSend" type="button">Kirim</button><button id="aiVoice" class="eom-voice-btn" type="button">🎙️ Bicara</button></div>
-      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;position:relative;z-index:1"><button id="aiSpeak" class="eom-prompt-chip" type="button">🔊 Bacakan jawaban terakhir</button></div>
-      <p class="eom-ai-note">Versi ini adalah tutor pintar lokal untuk latihan dasar dan privasi anak. Ia tidak mengirim pertanyaan ke layanan AI eksternal. Materi yang lebih luas dapat dikembangkan kemudian melalui layanan AI terhubung.</p>
-    </section>
-
-    <div class="eom-programs">
-      <div class="section-head-v3"><div><div class="kicker-v3">PLAY · READ · SHARE</div><h2>Program yang Membuat Membaca Lebih Hidup</h2><p class="muted-v3">Semua program disusun dalam satu tempat agar halaman tetap rapi dan mudah dipahami.</p></div></div>
-      <div class="eom-program-grid">
-        <article class="eom-program"><div class="eom-program-icon">🍎</div><h3>Dony, Oma Mey & Opa Edy</h3><p>Masuk ke seri bacaan anak dan petualangan keluarga Dony.</p><button type="button" data-program="dony">Cari seri Dony →</button></article>
-        <article class="eom-program"><div class="eom-program-icon">🛤️</div><h3>Kamu Pilih Ceritanya</h3><p>Cerita interaktif dengan pilihan yang mengubah jalan cerita.</p><button type="button" data-program="story">Mulai cerita →</button></article>
-        <article class="eom-program"><div class="eom-program-icon">🧠</div><h3>Kuis Setelah Membaca</h3><p>Lima soal ringan untuk melatih pemahaman dan mendapatkan poin.</p><button type="button" data-program="quiz">Mulai kuis →</button></article>
-        <article class="eom-program"><div class="eom-program-icon">🎧</div><h3>Cerita Audio + Teks</h3><p>Buka buku digital dan gunakan fitur Dengarkan di ruang baca.</p><button type="button" data-program="audio">Cari cerita audio →</button></article>
-        <article class="eom-program"><div class="eom-program-icon">▦</div><h3>Scan Buku, Temukan Kejutan</h3><p>Kenali ISBN lalu jelajahi detail dan informasi buku.</p><button type="button" data-program="scan">Scan sekarang →</button></article>
-        <article class="eom-program"><div class="eom-program-icon">🏫</div><h3>Tantangan Kelas & Sekolah</h3><p>Konsep papan skor berbasis konsistensi, kuis, dan partisipasi.</p><button type="button" data-program="school">Lihat konsep →</button></article>
-        <article class="eom-program"><div class="eom-program-icon">✍️</div><h3>Karya Pelajar Minggu Ini</h3><p>Puisi, cerpen, resensi, artikel sains, foto cerita, dan komik.</p><button type="button" data-program="student">Kirim ide karya →</button></article>
-        <article class="eom-program"><div class="eom-program-icon">💬</div><h3>Komik Mini Echo</h3><p>Komik singkat dan ringan yang mengantar pembaca ke bacaan.</p><button type="button" data-program="comic">Baca komik →</button></article>
-        <article class="eom-program"><div class="eom-program-icon">👨‍👩‍👧</div><h3>Satu Keluarga Satu Cerita</h3><p>Membaca 10 menit bersama anak, orang tua, oma, opa, atau saudara.</p><button type="button" data-program="family">Mulai misi keluarga →</button></article>
-        <article class="eom-program"><div class="eom-program-icon">🌙</div><h3>Malam Cerita Echo</h3><p>Satu waktu tenang untuk cerita keluarga, budaya, dan bacaan anak.</p><button type="button" data-program="night">Buka cerita malam →</button></article>
-        <article class="eom-program"><div class="eom-program-icon">🎁</div><h3>Hadiah Dunia Nyata</h3><p>Poin dan gelar dapat menjadi dasar bookmark, sertifikat, atau hadiah kegiatan.</p><button type="button" data-program="rewards">Lihat progres →</button></article>
-        <article class="eom-program"><div class="eom-program-icon">🎪</div><h3>Festival Literasi Mobon</h3><p>Ruang untuk dongeng, puisi, resensi, komik, pameran, dan karya digital.</p><button type="button" data-program="festival">Lihat program →</button></article>
-      </div>
-    </div>
-  </section>
-'''
+              text = text.replace('      <h1>Echo of<br>Mobon</h1>', '      <h1>Echo of<br>Mobon</h1>\n      <p class="mobon-slogan">An Island of Peace, Unseen by the Eyes, Heard by the Universe</p>')
           if 'id="literacy-hub"' not in text:
-              text=text.replace('<main>\n','<main>\n'+hub+'\n',1)
-
-          js='  <script src="assets/literacy-adventure-v1.js?v=20261102-1"></script>\n'
+              text = text.replace('<main>\n', '<main>\n' + frag + '\n', 1)
           if 'literacy-adventure-v1.js' not in text:
-              text=text.replace('</body>',js+'</body>')
+              text = text.replace('</body>', '  <script src="assets/literacy-adventure-v1.js?v=20261102-1"></script>\n</body>')
 
-          p.write_text(text,encoding='utf-8')
+          p.write_text(text, encoding='utf-8')
           PY
       - name: Commit installation
         shell: bash
