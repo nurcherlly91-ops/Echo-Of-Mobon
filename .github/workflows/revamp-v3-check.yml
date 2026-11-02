@@ -1,0 +1,38 @@
+name: Echo v3 Revision Check
+on:
+  push:
+    branches: [revamp-classic-v3]
+  pull_request:
+    branches: [main]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: |
+          node --check assets/i18n-v3.js
+          node --check assets/book-metadata.js
+          node --check assets/experience-v3.js
+          node --check admin/assets/smart-book-intake.js
+          node --check admin/assets/admin-v3.js
+      - name: Verify required guest portal elements
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          html=Path('index.html').read_text(encoding='utf-8')
+          ids=['guestEntryBtn','guestForm','guestName','guestPhone','guestAddress','guestStatus','guestPurpose','joinMemberBtn','memberJoinForm','joinPhoto','joinPhotoPreview','joinMemberNo','joinName','joinPhone','joinAddress','joinRole','myCardBtn','myCardContent','printMyCardBtn','borrowForm','borrowBookId','borrowBookLabel','borrowIdentityNote','borrowRules','borrowDate','returnDate','deliveryRequested','deliveryFields','deliveryAddress','deliveryFeeNote','borrowNote','guestSearch','guestCategory','guestLevel','guestBooks','collectionSummary','serviceInfoText','digitalSearch','digitalCategoryFilter','digitalCount','digitalLibrary','readerDialog','readerTitle','readerMeta','readerBadges','readerCoverWrap','readerPdfOpen','readerFontBtn','readerPdfFrame','readerContent','myHistorySection','myHistory','scanDialog','communityFeed','communityForm','mobonListenForm','englishLesson','myLibrary']
+          missing=[i for i in ids if f'id="{i}"' not in html]
+          if missing: raise SystemExit('Missing IDs: '+', '.join(missing))
+          print('Guest portal required IDs OK:', len(ids))
+          PY
+      - name: Verify admin v3 wiring
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          html=Path('admin/index.html').read_text(encoding='utf-8')
+          needed=['../assets/book-metadata.js','assets/smart-book-intake.js','assets/admin-v3.js','assets/admin-v3.css']
+          missing=[x for x in needed if x not in html]
+          if missing: raise SystemExit('Missing admin wiring: '+', '.join(missing))
+          print('Admin v3 wiring OK')
+          PY
