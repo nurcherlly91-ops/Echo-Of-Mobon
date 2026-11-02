@@ -1,9 +1,10 @@
 @media (max-width:680px){
   .eom-v3 .topbar{align-items:center!important;padding:8px 10px!important;gap:8px!important}
-  .eom-v3 .brand{min-width:0;flex:1}
+  .eom-v3 .brand{min-width:0;flex:1;align-items:center!important}
   .eom-v3 .brand img{width:40px!important;height:40px!important;flex:0 0 40px}
-  .eom-v3 .brand strong{font-size:.94rem!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
-  .eom-v3 .brand small{display:none!important}
+  .eom-v3 .brand>div{min-width:0;display:flex;flex-direction:column;justify-content:center}
+  .eom-v3 .brand strong{font-size:.94rem!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;line-height:1.05}
+  .eom-v3 .brand small{display:block!important;font-size:.56rem!important;line-height:1.1!important;letter-spacing:.04em!important;text-transform:none!important;margin-top:2px;color:#7a7063!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
   .mobile-nav-toggle{display:none!important}
   .eom-v3 .topbar nav,.eom-v3 .topbar nav.open{
     display:flex!important;
@@ -35,5 +36,6 @@
 }
 @media (max-width:390px){
   .eom-v3 .brand strong{max-width:126px;font-size:.88rem!important}
+  .eom-v3 .brand small{max-width:126px;font-size:.53rem!important}
   .eom-v3 .topbar .language-select{width:96px!important;max-width:96px!important;min-width:96px!important;font-size:.74rem!important;padding-left:6px!important}
 }
