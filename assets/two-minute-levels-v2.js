@@ -1,0 +1,93 @@
+(function(){
+'use strict';
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const STATE_KEY='eom_literacy_v1', REWARD_KEY='eom_micro_rewards_v2', LEVEL_KEY='eom_two_minute_level_v2';
+const levels={
+ tk:{label:'TK',icon:'🧸',desc:'Huruf, angka, warna, bentuk, bunyi, dan kata sederhana.'},
+ sd:{label:'SD',icon:'📘',desc:'Berhitung, membaca, Bahasa Indonesia, Inggris, IPA, dan IPS dasar.'},
+ smp:{label:'SMP',icon:'🎒',desc:'Matematika, IPA, IPS, Bahasa, Informatika, dan logika.'},
+ sma:{label:'SMA',icon:'🎓',desc:'Aljabar, sains, sosial, bahasa, ekonomi, dan penalaran.'},
+ mahasiswa:{label:'Mahasiswa',icon:'🏛️',desc:'Statistik, riset, literasi akademik, logika, dan analisis.'},
+ umum:{label:'Umum',icon:'🌍',desc:'Numerasi, literasi digital, pengetahuan praktis, dan logika sehari-hari.'}
+};
+const fixed={
+ tk:[
+  {s:'Huruf',q:'Huruf pertama dari kata “Buku” adalah ...',a:['B','K','U'],c:0,e:'Buku dimulai dengan huruf B.'},
+  {s:'Warna',q:'Warna daun yang sehat biasanya ...',a:['Hijau','Hitam','Ungu'],c:0,e:'Daun sehat umumnya berwarna hijau.'},
+  {s:'Bentuk',q:'Bentuk roda adalah ...',a:['Lingkaran','Segitiga','Persegi'],c:0,e:'Roda berbentuk lingkaran.'},
+  {s:'Mengeja',q:'Kata “mata” dibaca ...',a:['ma-ta','mat-a','m-at-a'],c:0,e:'Mata dipecah menjadi ma-ta.'},
+  {s:'Tubuh',q:'Kita melihat menggunakan ...',a:['Mata','Telinga','Hidung'],c:0,e:'Mata digunakan untuk melihat.'},
+  {s:'Hewan',q:'Hewan yang berbunyi “meong” adalah ...',a:['Kucing','Ayam','Ikan'],c:0,e:'Kucing biasa berbunyi meong.'}
+ ],
+ sd:[
+  {s:'Bahasa Indonesia',q:'Lawan kata “tinggi” adalah ...',a:['Rendah','Jauh','Cepat'],c:0,e:'Antonim tinggi adalah rendah.'},
+  {s:'Bahasa Inggris',q:'Arti “school” adalah ...',a:['Rumah','Sekolah','Buku'],c:1,e:'School berarti sekolah.'},
+  {s:'IPA',q:'Tumbuhan membuat makanan melalui ...',a:['Fotosintesis','Erosi','Rotasi'],c:0,e:'Tumbuhan membuat makanan melalui fotosintesis.'},
+  {s:'IPS',q:'Kegiatan membuat barang disebut ...',a:['Produksi','Distribusi','Konsumsi'],c:0,e:'Produksi adalah kegiatan menghasilkan barang atau jasa.'},
+  {s:'Geografi',q:'Matahari terbit dari arah ...',a:['Timur','Barat','Utara'],c:0,e:'Matahari tampak terbit dari timur.'},
+  {s:'PPKn',q:'Dasar negara Indonesia adalah ...',a:['Pancasila','Peta','Kamus'],c:0,e:'Pancasila adalah dasar negara Indonesia.'}
+ ],
+ smp:[
+  {s:'IPA',q:'Perubahan cair menjadi gas disebut ...',a:['Menguap','Membeku','Mengembun'],c:0,e:'Cair menjadi gas disebut menguap.'},
+  {s:'IPS',q:'Jual beli termasuk kegiatan ...',a:['Ekonomi','Fotosintesis','Geologi'],c:0,e:'Jual beli merupakan kegiatan ekonomi.'},
+  {s:'Bahasa Indonesia',q:'Kalimat utama biasanya berisi ...',a:['Gagasan pokok','Nama penulis saja','Tanda baca saja'],c:0,e:'Kalimat utama memuat gagasan pokok.'},
+  {s:'Informatika',q:'Urutan langkah logis untuk menyelesaikan masalah disebut ...',a:['Algoritma','Monitor','Folder'],c:0,e:'Algoritma adalah urutan langkah penyelesaian masalah.'},
+  {s:'Geografi',q:'Garis lintang 0° disebut ...',a:['Khatulistiwa','Meridian utama','Garis balik'],c:0,e:'Garis lintang 0° adalah Khatulistiwa.'},
+  {s:'Bahasa Inggris',q:'“They are reading” berarti ...',a:['Mereka sedang membaca','Mereka sedang tidur','Mereka sedang berlari'],c:0,e:'They are reading berarti mereka sedang membaca.'}
+ ],
+ sma:[
+  {s:'Biologi',q:'Tempat utama respirasi sel adalah ...',a:['Mitokondria','Ribosom','Lisosom'],c:0,e:'Mitokondria berperan utama dalam respirasi sel.'},
+  {s:'Ekonomi',q:'Kenaikan harga umum terus-menerus disebut ...',a:['Inflasi','Distribusi','Subsidi'],c:0,e:'Inflasi adalah kenaikan tingkat harga secara umum dan berkelanjutan.'},
+  {s:'Geografi',q:'Garis lintang 0° adalah ...',a:['Khatulistiwa','Meridian Greenwich','Garis tanggal'],c:0,e:'Garis lintang 0° disebut Khatulistiwa.'},
+  {s:'Bahasa Inggris',q:'Choose the correct form: “She ___ to school every day.”',a:['go','goes','going'],c:1,e:'Untuk she pada simple present, bentuknya goes.'},
+  {s:'Kimia',q:'Nomor atom menunjukkan jumlah ... pada atom netral.',a:['Proton','Molekul','Larutan'],c:0,e:'Nomor atom sama dengan jumlah proton.'},
+  {s:'Sejarah',q:'Proklamasi Kemerdekaan Indonesia dibacakan pada ...',a:['17 Agustus 1945','28 Oktober 1928','1 Juni 1945'],c:0,e:'Proklamasi dibacakan 17 Agustus 1945.'}
+ ],
+ mahasiswa:[
+  {s:'Statistik',q:'Ukuran pemusatan yang paling sensitif terhadap pencilan adalah ...',a:['Mean','Median','Modus'],c:0,e:'Mean memakai seluruh nilai sehingga lebih sensitif terhadap pencilan.'},
+  {s:'Metodologi',q:'Variabel yang dimanipulasi peneliti disebut ...',a:['Independen','Dependen','Kontrol'],c:0,e:'Variabel independen adalah variabel yang dimanipulasi atau menjadi prediktor.'},
+  {s:'Literasi Akademik',q:'Parafrasa yang baik harus ...',a:['Menjaga makna dengan bahasa sendiri dan menyebut sumber','Menyalin kalimat persis','Menghilangkan sumber'],c:0,e:'Parafrasa menjaga makna dengan susunan sendiri dan tetap memberi atribusi.'},
+  {s:'Logika',q:'Jika semua A adalah B dan semua B adalah C, maka ...',a:['Semua A adalah C','Semua C adalah A','Tidak ada hubungan'],c:0,e:'Secara transitif A termasuk dalam C.'},
+  {s:'Ekonomi',q:'Biaya peluang adalah ...',a:['Nilai alternatif terbaik yang dikorbankan','Harga setelah diskon','Biaya tetap'],c:0,e:'Biaya peluang adalah nilai alternatif terbaik yang dilepas.'},
+  {s:'Riset',q:'Hipotesis penelitian sebaiknya ...',a:['Dapat diuji','Selalu panjang','Tidak berkaitan dengan variabel'],c:0,e:'Hipotesis yang baik harus dapat diuji dengan data.'}
+ ],
+ umum:[
+  {s:'Literasi Digital',q:'Saat menerima tautan mencurigakan, tindakan paling aman adalah ...',a:['Periksa sumber dan jangan masukkan data pribadi','Langsung klik','Teruskan ke semua kontak'],c:0,e:'Periksa sumber dan jangan membagikan data pribadi.'},
+  {s:'Keseharian',q:'Untuk membandingkan harga kemasan berbeda, lihat ...',a:['Harga per satuan','Warna kemasan','Ukuran huruf'],c:0,e:'Harga per satuan membuat perbandingan lebih adil.'},
+  {s:'Bahasa',q:'Informasi tepercaya sebaiknya ...',a:['Memiliki sumber yang dapat diperiksa','Selalu dari pesan berantai','Tanpa tanggal'],c:0,e:'Sumber yang jelas membantu menilai keandalan informasi.'},
+  {s:'Lingkungan',q:'Cara sederhana mengurangi sampah plastik adalah ...',a:['Membawa botol pakai ulang','Membuang ke sungai','Membakar semua plastik'],c:0,e:'Wadah pakai ulang mengurangi sampah sekali pakai.'},
+  {s:'Keuangan',q:'Sebelum membeli barang, langkah bijak adalah ...',a:['Bedakan kebutuhan dan keinginan','Selalu berutang','Tidak membandingkan harga'],c:0,e:'Membedakan kebutuhan dan keinginan membantu mengatur uang.'},
+  {s:'Kesehatan Umum',q:'Kebiasaan yang membantu kebugaran adalah ...',a:['Aktif bergerak dan cukup istirahat','Tidak pernah tidur','Hanya duduk sepanjang hari'],c:0,e:'Aktivitas fisik dan istirahat cukup membantu kebugaran.'}
+ ]
+};
+function parse(key){try{return JSON.parse(sessionStorage.getItem(key)||'null')}catch{return null}}
+function identity(){const m=parse('eom_member_online'),g=parse('eom_guest_online');if(m)return{name:m.full_name||'Anggota',id:'m:'+(m.member_no||m.full_name||'anggota')};if(g)return{name:g.name||'Tamu',id:'g:'+(g.phone||'')+':' +(g.name||'tamu')};return{name:'Pengunjung',id:'anon'};}
+function hash(s){let h=2166136261>>>0;for(const ch of String(s)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function rng(seed){let x=seed>>>0;return()=>{x+=0x6D2B79F5;let t=x;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296}}
+function sessionSeed(level){const who=identity();const key='eom_quiz_serial_'+hash(who.id);let n=Number(localStorage.getItem(key)||0)+1;localStorage.setItem(key,String(n));return{who,serial:n,seed:hash(who.id+'|'+level+'|'+n+'|'+Date.now())}}
+function dayId(){const d=new Date();return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000)}
+function award(n,token){if(n<=0)return false;let rewards={};try{rewards=JSON.parse(localStorage.getItem(REWARD_KEY)||'{}')}catch{}const k=dayId()+':'+token;if(rewards[k])return false;rewards[k]=true;localStorage.setItem(REWARD_KEY,JSON.stringify(rewards));let st={points:0,missions:{}};try{st=Object.assign(st,JSON.parse(localStorage.getItem(STATE_KEY)||'{}'))}catch{}st.points=(Number(st.points)||0)+n;localStorage.setItem(STATE_KEY,JSON.stringify(st));const p=$('#eomPoints');if(p)p.textContent=String(st.points);return true}
+function distract(correct,delta=3){const n=Number(correct);const vals=[n,Math.max(0,n-delta),n+delta];return vals.map(String)}
+function mathQuestion(level,R){if(level==='tk'){const a=Math.floor(R()*6),b=Math.floor(R()*5),ans=a+b;return{s:'Berhitung',q:`${a} + ${b} = ...`,a:distract(ans,1),c:0,e:`${a} + ${b} = ${ans}.`}}
+ if(level==='sd'){const a=10+Math.floor(R()*70),b=2+Math.floor(R()*30),op=R()<.65?'+':'−',ans=op==='+'?a+b:a-b;return{s:'Matematika',q:`${a} ${op} ${b} = ...`,a:distract(ans,2),c:0,e:`Jawabannya ${ans}.`}}
+ if(level==='smp'){const x=2+Math.floor(R()*12),k=2+Math.floor(R()*8),v=x*k;return{s:'Matematika',q:`Jika ${k}x = ${v}, nilai x adalah ...`,a:[String(x),String(x+1),String(Math.max(1,x-1))],c:0,e:`x = ${v} ÷ ${k} = ${x}.`}}
+ if(level==='sma'){const a=2+Math.floor(R()*5),b=1+Math.floor(R()*9),x=1+Math.floor(R()*8),ans=a*x+b;return{s:'Matematika',q:`Jika f(x)=${a}x+${b}, maka f(${x}) = ...`,a:[String(ans),String(ans+a),String(Math.max(0,ans-b))],c:0,e:`f(${x})=${a}×${x}+${b}=${ans}.`}}
+ if(level==='mahasiswa'){const vals=[1+Math.floor(R()*9),1+Math.floor(R()*9),1+Math.floor(R()*9),1+Math.floor(R()*9)];const sum=vals.reduce((a,b)=>a+b,0),mean=sum/4;return{s:'Statistik',q:`Rata-rata dari ${vals.join(', ')} adalah ...`,a:[String(mean),String(mean+1),String(Math.max(0,mean-1))],c:0,e:`Jumlah ${sum} dibagi 4 = ${mean}.`}}
+ const price=(2+Math.floor(R()*8))*10000,disc=[10,20,25][Math.floor(R()*3)],ans=price*(100-disc)/100;return{s:'Numerasi',q:`Harga Rp${price.toLocaleString('id-ID')} didiskon ${disc}%. Harga akhirnya ...`,a:[`Rp${ans.toLocaleString('id-ID')}`,`Rp${(price-disc*100).toLocaleString('id-ID')}`,`Rp${price.toLocaleString('id-ID')}`],c:0,e:`Harga setelah diskon adalah Rp${ans.toLocaleString('id-ID')}.`}}
+function nextQuestion(level,R,seen){for(let tries=0;tries<30;tries++){let q;if(R()<.55)q=mathQuestion(level,R);else{const pool=fixed[level]||fixed.umum;q={...pool[Math.floor(R()*pool.length)]}}if(!seen.has(q.q)){seen.add(q.q);return q}}return mathQuestion(level,R)}
+function shuffleAnswers(q,R){const arr=q.a.map((text,i)=>({text,ok:i===q.c}));for(let i=arr.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return{...q,a:arr.map(x=>x.text),c:arr.findIndex(x=>x.ok)}}
+function ensureStyle(){if($('#eomTwoMinuteStyleV2'))return;const st=document.createElement('style');st.id='eomTwoMinuteStyleV2';st.textContent=`#eomTwoMinuteDialog{border:0;border-radius:24px;padding:0;width:min(700px,calc(100% - 24px));box-shadow:0 28px 80px rgba(0,0,0,.3)}#eomTwoMinuteDialog::backdrop{background:rgba(7,24,32,.72);backdrop-filter:blur(4px)}.eom2m{padding:22px;background:#fff;color:#243842;position:relative}.eom2m h2{font-family:Georgia,serif;color:#173f52;margin:4px 42px 6px 0}.eom2m p{color:#69777e;line-height:1.5}.eom2m-close{position:absolute;right:14px;top:14px;width:34px;height:34px;border:0;border-radius:50%;background:#edf2f3;font-size:1.15rem;cursor:pointer}.eom2m-levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:16px 0}.eom2m-level{border:1px solid #dce4e4;background:#f9fbfb;border-radius:14px;padding:12px;text-align:left;cursor:pointer}.eom2m-level strong{display:block;color:#173f52;margin-bottom:3px}.eom2m-level small{display:block;color:#6d7a80;line-height:1.35}.eom2m-top{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.eom2m-timer{font-weight:900;color:#8a651e;background:#fff6df;border:1px solid #ead8a5;border-radius:999px;padding:7px 11px}.eom2m-stats{font-size:.85rem;font-weight:750;color:#52636b}.eom2m-q{font-size:1.12rem;line-height:1.5;margin:10px 0 14px;color:#173f52}.eom2m-answers{display:grid;gap:9px}.eom2m-answers button{border:1px solid #dbe2e2;background:#f8fbfb;border-radius:12px;padding:12px;text-align:left;font:inherit;cursor:pointer}.eom2m-answers button:hover{border-color:#b99548;background:#fffaf0}.eom2m-pass{margin-top:10px;border:1px solid #dbc8a4;border-radius:11px;background:#fff9ed;color:#7b5a22;padding:9px 12px;font-weight:800;cursor:pointer}.eom2m-feedback{min-height:24px;margin-top:10px;font-weight:800}.eom2m-score{font-size:2.1rem;font-weight:900;color:#174d68}.eom2m-again{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.eom2m-again button{border:0;border-radius:11px;padding:10px 13px;font:inherit;font-weight:800;cursor:pointer}.eom2m-primary{background:#174d68;color:#fff}.eom2m-alt{background:#f2ead6;color:#6f5321}.eom2m-user{display:inline-block;margin:6px 0 2px;padding:5px 9px;border-radius:999px;background:#edf5f6;color:#174d68;font-size:.82rem;font-weight:800}@media(max-width:620px){.eom2m-levels{grid-template-columns:1fr 1fr}.eom2m{padding:18px}.eom2m-level small{font-size:.76rem}}`;document.head.appendChild(st)}
+function dialog(){let d=$('#eomTwoMinuteDialog');if(!d){d=document.createElement('dialog');d.id='eomTwoMinuteDialog';document.body.appendChild(d)}return d}
+function openPicker(){ensureStyle();const d=dialog(),who=identity();d.innerHTML=`<div class="eom2m"><button class="eom2m-close" type="button">×</button><div style="font-size:.75rem;font-weight:800;letter-spacing:.08em;color:#9b7429">KEJUTAN HARI INI · LATIHAN 2 MENIT</div><h2>Pilih Jenjang Belajar</h2><span class="eom2m-user">👤 ${who.name}</span><p>Jawab <b>sebanyak mungkin soal selama 120 detik</b>. Soal akan langsung berganti setelah dijawab. Setiap sesi dibuat berbeda untuk pengguna yang sama.</p><div class="eom2m-levels">${Object.entries(levels).map(([k,v])=>`<button class="eom2m-level" type="button" data-level="${k}"><strong>${v.icon} ${v.label}</strong><small>${v.desc}</small></button>`).join('')}</div></div>`;$('.eom2m-close',d).onclick=()=>d.close();$$('[data-level]',d).forEach(b=>b.onclick=()=>{localStorage.setItem(LEVEL_KEY,b.dataset.level);start(b.dataset.level)});if(typeof d.showModal==='function')d.showModal();else d.setAttribute('open','')}
+function start(level){const d=dialog(),meta=sessionSeed(level),R=rng(meta.seed),seen=new Set();let remaining=120,correct=0,wrong=0,passed=0,total=0,locked=false,ended=false,timer=null,current=null;
+ function stats(){const el=$('#eom2mStats',d);if(el)el.textContent=`Soal ${total+1} · ✅ ${correct} · ❌ ${wrong} · ⏭️ ${passed}`}
+ function render(){if(ended||remaining<=0)return;locked=false;current=shuffleAnswers(nextQuestion(level,R,seen),R);d.innerHTML=`<div class="eom2m"><button class="eom2m-close" type="button">×</button><div class="eom2m-top"><div><div style="font-size:.75rem;font-weight:800;letter-spacing:.06em;color:#9b7429">${levels[level].icon} ${levels[level].label} · ${meta.who.name}</div><div id="eom2mStats" class="eom2m-stats"></div></div><div class="eom2m-timer">⏱️ <span id="eom2mTimer">${remaining}</span> detik</div></div><div style="font-size:.8rem;font-weight:800;color:#62747b">${current.s}</div><div class="eom2m-q">${current.q}</div><div class="eom2m-answers">${current.a.map((x,i)=>`<button type="button" data-answer="${i}">${x}</button>`).join('')}</div><button id="eom2mPass" class="eom2m-pass" type="button">Lewati / Tidak Tahu</button><div id="eom2mFeedback" class="eom2m-feedback"></div></div>`;stats();$('.eom2m-close',d).onclick=()=>finish(false,true);$$('[data-answer]',d).forEach(b=>b.onclick=()=>answer(Number(b.dataset.answer)));$('#eom2mPass',d).onclick=()=>skip()}
+ function answer(i){if(locked||ended)return;locked=true;total++;const ok=i===current.c;if(ok)correct++;else wrong++;const f=$('#eom2mFeedback',d);if(f){f.style.color=ok?'#2f6e57':'#9d513f';f.textContent=ok?'✓ Benar! Soal berikutnya...':'Belum tepat. Jawaban: '+current.a[current.c]}setTimeout(render,ok?180:360)}
+ function skip(){if(locked||ended)return;locked=true;total++;passed++;const f=$('#eom2mFeedback',d);if(f){f.style.color='#7b5a22';f.textContent='Dilewati. Lanjut...'}setTimeout(render,160)}
+ function finish(timeout=true,closeOnly=false){if(ended)return;ended=true;clearInterval(timer);if(closeOnly){d.close();return}const pts=Math.min(10,Math.max(0,Math.floor(correct/3))),won=award(pts,`two-minute-v2-${level}`),accuracy=(correct+wrong)?Math.round(correct/(correct+wrong)*100):0;d.innerHTML=`<div class="eom2m"><button class="eom2m-close" type="button">×</button><div style="font-size:.75rem;font-weight:800;letter-spacing:.06em;color:#9b7429">${levels[level].icon} ${levels[level].label} · ${meta.who.name}</div><h2>${timeout?'⏰ Waktu Selesai!':'Latihan Selesai'}</h2><div class="eom2m-score">${correct} jawaban benar</div><p>Kamu mengerjakan <b>${total}</b> soal dalam 2 menit.</p><p>✅ Benar: <b>${correct}</b> &nbsp; ❌ Salah: <b>${wrong}</b> &nbsp; ⏭️ Dilewati: <b>${passed}</b><br>Akurasi: <b>${accuracy}%</b></p><p>${pts>0?(won?`🌟 +${pts} poin Jejak Mobon.`:'Poin latihan hari ini sudah diperoleh, tetapi skor baru tetap tercatat di perangkat ini.'):'Coba lagi dan kumpulkan jawaban benar sebanyak mungkin.'}</p><div class="eom2m-again"><button id="eom2mAgain" class="eom2m-primary" type="button">Ulangi Jenjang Ini</button><button id="eom2mLevels" class="eom2m-alt" type="button">Pilih Jenjang Lain</button></div></div>`;$('.eom2m-close',d).onclick=()=>d.close();$('#eom2mAgain',d).onclick=()=>start(level);$('#eom2mLevels',d).onclick=openPicker}
+ render();timer=setInterval(()=>{remaining--;const t=$('#eom2mTimer',d);if(t)t.textContent=String(Math.max(0,remaining));if(remaining<=0)finish(true,false)},1000);d.addEventListener('cancel',e=>{e.preventDefault();finish(false,true)},{once:true})}
+function markEntry(){const gf=document.getElementById('guestForm'),mf=document.getElementById('memberJoinForm');const bump=()=>sessionStorage.setItem('eom_quiz_entry_nonce',String(Date.now())+'-'+Math.random().toString(36).slice(2));if(gf)gf.addEventListener('submit',bump,true);if(mf)mf.addEventListener('submit',bump,true);if(!sessionStorage.getItem('eom_quiz_entry_nonce'))bump()}
+function bind(){const b=$('#eomMinuteBtn');if(!b)return false;b.textContent='⚡ Latihan 2 Menit';b.dataset.continuousV2='1';b.onclick=openPicker;return true}
+function init(){markEntry();ensureStyle();bind();const o=new MutationObserver(()=>{if(bind())o.disconnect()});o.observe(document.body,{childList:true,subtree:true});setTimeout(()=>{bind();o.disconnect()},8000)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
