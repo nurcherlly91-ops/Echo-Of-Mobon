@@ -102,7 +102,9 @@ function rankingDialog(){
  $('#eomRankLevel',d).onchange=render;$('#eomRankQuarter',d).onchange=render;render();
 }
 function init(){
- css();const btn=$('#eomExamEntry');if(btn)btn.onclick=openExam;
+ css();let btn=$('#eomExamEntry');
+ if(!btn){const strip=$('.entry-strip');if(strip){btn=document.createElement('button');btn.id='eomExamEntry';btn.type='button';btn.className='entry-card';btn.innerHTML='<span class="entry-icon">📝</span><span><strong>Latihan Ulangan &amp; Ujian Sekolah</strong><small>40 soal setiap paket untuk SD, SMP, SMA, dan SMK. Nilai dan peringkat otomatis.</small></span>';const game=$('#eomGameEntry',strip);if(game)game.insertAdjacentElement('afterend',btn);else strip.appendChild(btn);}}
+ if(btn){btn.onclick=openExam;const sub=btn.querySelector('small');if(sub)sub.textContent='40 soal per paket · SD, SMP, SMA, SMK · nilai otomatis.';}
  if(!$('#eomRankingEntry')&&document.querySelector('.entry-strip')){
   const b=document.createElement('button');b.id='eomRankingEntry';b.type='button';b.className='entry-card';b.innerHTML='<span class="entry-icon">🏆</span><span><strong>Top 20 Pelajar · Peringkat Triwulan</strong><small>Lihat nilai terbaik SD, SMP, SMA, dan SMK setiap tiga bulan. Nama dan foto memerlukan izin publikasi.</small></span>';b.onclick=rankingDialog;const card=$('#eomExamEntry');if(card)card.insertAdjacentElement('afterend',b);else $('.entry-strip').appendChild(b);
  }
