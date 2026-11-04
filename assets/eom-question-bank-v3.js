@@ -55,5 +55,5 @@ function sampleFor(cat,n){return pick('game_'+cat,banks[cat]||banks.truefalse,n|
 function wordsFor(n){return pick('words',wordPool,n||20);}
 function memoryFor(n){return pick('memory',memoryPool,n||10);}
 function dailyFor(ids){return pick('daily_game',ids,1)[0]||ids[0];}
-window.EOMQuestionBank={sampleFor:sampleFor,wordsFor:wordsFor,memoryFor:memoryFor,dailyFor:dailyFor,identity:identity,pick:pick,mixOptions:mixOptions,counts:Object.fromEntries(Object.entries(banks).map(function(x){return[x[0],x[1].length];}))};
+window.EOMQuestionBank={sampleFor:sampleFor,wordsFor:wordsFor,memoryFor:memoryFor,dailyFor:dailyFor,identity:identity,pick:pick,mixOptions:mixOptions,getPool:function(cat){return(banks[cat]||[]).slice();},counts:Object.fromEntries(Object.entries(banks).map(function(x){return[x[0],x[1].length];}))};
 })();
