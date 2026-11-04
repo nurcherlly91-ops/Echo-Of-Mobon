@@ -20,7 +20,8 @@ function css(){
  document.head.appendChild(s);
 }
 function shell(){
- const d=$('#eomExamDialog');if(!d)return null;
+ let d=$('#eomExamDialog');
+ if(!d){d=document.createElement('dialog');d.id='eomExamDialog';document.body.appendChild(d);}
  d.innerHTML='<div class="eom-exam-shell"><div class="eom-exam-head"><div><div class="eom-exam-kicker">ECHO OF MOBON · LATIHAN 40 SOAL</div><h2>Latihan Ulangan &amp; Ujian Sekolah</h2><div class="eom-online-plain">Nilai dan peringkat dihitung otomatis setelah latihan selesai.</div></div><button id="eomExamOnlineClose" class="eom-exam-close" type="button" aria-label="Tutup">×</button></div><div id="eomExamOnlineBody"></div></div>';
  $('#eomExamOnlineClose',d).onclick=()=>d.close();
  if(!d.open){if(typeof d.showModal==='function')d.showModal();else d.setAttribute('open','');}
