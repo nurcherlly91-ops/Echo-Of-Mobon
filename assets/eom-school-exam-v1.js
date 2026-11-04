@@ -116,7 +116,7 @@ function open(){
  l.innerHTML=Object.keys(subjects).map(function(x){return '<option value="'+x+'">'+x+'</option>';}).join('');
  l.value=saved.level;m.value=saved.mode==='ujian'?'ujian':'ulangan';
  function refresh(){
-  const from=l.value==='SD'?1:7,to=l.value==='SD'?6:l.value==='SMP'?9:12;
+  const from=l.value==='SD'?1:l.value==='SMP'?7:10,to=l.value==='SD'?6:l.value==='SMP'?9:12;
   const grades=[];for(let i=from;i<=to;i++)grades.push('<option value="'+i+'">Kelas '+i+'</option>');
   const current=Number(g.value)||Number(saved.grade);g.innerHTML=grades.join('');
   g.value=current>=from&&current<=to?String(current):String(from);
