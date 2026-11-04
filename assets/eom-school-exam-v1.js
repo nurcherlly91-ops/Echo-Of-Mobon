@@ -69,11 +69,11 @@ function raw(cat){
 }
 function poolFor(level,grade,subject){
  if(subject==='Matematika')return mathQuestions(level,grade);
- if(subject==='Bahasa Indonesia')return level==='SD'?raw('spell').concat(raw('story')):fact.bindoLanjut;
- if(subject==='Bahasa Inggris')return level==='SD'?raw('english'):fact.englishLanjut.concat(raw('english'));
+ if(subject==='Bahasa Indonesia'){if(level==='SD')return grade<=2?raw('spell').slice(0,26).concat(raw('story').slice(0,10)):grade<=4?raw('spell').concat(raw('story')):raw('story').concat(raw('spell').slice(10)).concat(fact.bindoLanjut.slice(0,12));return fact.bindoLanjut;}
+ if(subject==='Bahasa Inggris'){if(level==='SD')return grade<=2?raw('english').slice(0,25):grade<=4?raw('english'):raw('english').concat(fact.englishLanjut.slice(0,12));return fact.englishLanjut.concat(raw('english'));}
  if(subject==='Pendidikan Pancasila')return fact.pancasila;
- if(subject==='IPAS')return raw('science').concat(fact.pancasila.slice(0,8));
- if(subject==='IPA')return fact.ipaSMP.concat(raw('science'));
+ if(subject==='IPAS')return grade<=2?raw('science').slice(0,26):raw('science').concat(raw('nusantara').slice(0,12));
+ if(subject==='IPA')return grade===7?raw('science').concat(fact.ipaSMP.slice(0,15)):grade===9?fact.ipaSMP.concat(raw('science').slice(0,12)):fact.ipaSMP.concat(raw('science'));
  if(subject==='IPS')return raw('nusantara').concat(raw('history'));
  if(subject==='Informatika')return raw('coding');
  if(subject==='Biologi')return fact.biologi;
