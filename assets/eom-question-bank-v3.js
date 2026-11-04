@@ -24,6 +24,51 @@ for(let i=0;i<90;i++){
  const price=1000*(10+i*19%90),extra=1000*(5+i*7%45),change=extra;
  banks.shop.push({q:'Harga Rp'+price.toLocaleString('id-ID')+' dibayar Rp'+(price+extra).toLocaleString('id-ID')+'. Kembaliannya ...',a:['Rp'+change.toLocaleString('id-ID'),'Rp'+(change+5000).toLocaleString('id-ID'),'Rp'+(change+10000).toLocaleString('id-ID')],c:0,e:'Kembalian sama dengan uang dibayar dikurangi harga.'});
 }
+// Variasi tambahan: bank setiap kategori cukup untuk dua paket latihan berbeda.
+const original=Object.fromEntries(Object.entries(banks).map(([k,v])=>[k,v.slice()]));
+function addUnique(cat,items){
+  const current=banks[cat]||[],seen=new Set(current.map(x=>x.q.toLowerCase()));
+  for(const item of items){const key=item.q.toLowerCase();if(!seen.has(key)){current.push(item);seen.add(key);}}
+  banks[cat]=current;
+}
+const nameWords='PANTAI KARANG RUMAH BUKU PELANGI BURUNG BUNGA KELAPA KELINCI SEKOLAH KAPAL SUNGAI HUTAN PENYU BINTANG GURITA TELUR KUCING PENSIL POHON PETA TARIAN BERANI CERITA LANGIT BUMI PASIR TANAH GEMBIRA PULAU'.split(' ');
+const spelling=[];
+for(const w of nameWords){const a=w[0],b=w[w.length-1],wrong1=String.fromCharCode(65+(a.charCodeAt(0)-64)%26),wrong2=String.fromCharCode(65+(a.charCodeAt(0)-63)%26);
+ spelling.push({q:'Huruf pertama dari kata '+w.toLowerCase()+' adalah ...',a:[a,wrong1,wrong2],c:0,e:'Kata '+w.toLowerCase()+' diawali huruf '+a+'.'});
+ const y=String.fromCharCode(65+(b.charCodeAt(0)-64)%26),z=String.fromCharCode(65+(b.charCodeAt(0)-63)%26);
+ spelling.push({q:'Huruf terakhir dari kata '+w.toLowerCase()+' adalah ...',a:[b,y,z],c:0,e:'Kata '+w.toLowerCase()+' diakhiri huruf '+b+'.'});
+}
+addUnique('spell',spelling);
+const englishPairs='Apple:Apel|Orange:Jeruk|Pineapple:Nanas|Banana:Pisang|Fish:Ikan|Bird:Burung|Tree:Pohon|Flower:Bunga|Leaf:Daun|River:Sungai|Mountain:Gunung|Cloud:Awan|Rain:Hujan|Sun:Matahari|Moon:Bulan|Star:Bintang|Sky:Langit|Earth:Bumi|Sand:Pasir|Stone:Batu|Chair:Kursi|Table:Meja|Door:Pintu|Window:Jendela|Hand:Tangan|Foot:Kaki|Eye:Mata|Ear:Telinga|Nose:Hidung|Mouth:Mulut|Smile:Senyum|Run:Berlari|Walk:Berjalan|Jump:Melompat|Sleep:Tidur|Eat:Makan|Drink:Minum|Think:Berpikir|Ask:Bertanya|Answer:Jawaban|Help:Membantu|Work:Bekerja|Play:Bermain|Study:Belajar|Open:Membuka|Close:Menutup|Cold:Dingin|Hot:Panas|Bright:Terang|Dark:Gelap'.split('|').map(s=>s.split(':'));
+addUnique('english',englishPairs.map((x,i)=>({q:'Apa arti kata Inggris "'+x[0]+'"?',a:[x[1],englishPairs[(i+7)%englishPairs.length][1],englishPairs[(i+19)%englishPairs.length][1]],c:0,e:x[0]+' artinya '+x[1]+'.'})));
+const logic=[];
+for(let i=1;i<=80;i++){
+ const a=1+(i*5%25),b=1+(i*3%14),c=a+b;
+ logic.push({q:'Dalam kode, let x = '+a+'; x += '+b+'; nilai x adalah ...',a:[String(c),String(a),String(b)],c:0,e:'Operator += menjumlahkan nilai sebelumnya dengan '+b+'.'});
+}
+addUnique('coding',logic);
+const truths=[];
+for(let i=1;i<=80;i++){
+ const a=1+(i*7%39),b=1+(i*11%22),real=a+b,shown=i%2?real:real+2;
+ const t=shown===real;
+ truths.push({q:'Pernyataan '+a+' + '+b+' = '+shown+' adalah benar.',a:[t?'Benar':'Salah',t?'Salah':'Benar'],c:0,e:'Hasil yang tepat '+a+' + '+b+' = '+real+'.'});
+}
+addUnique('truefalse',truths);
+const shapes=[];
+for(let i=1;i<=55;i++){
+ const a=3+(i%10),b=i%3;
+ if(b===0)shapes.push({q:'Keliling persegi dengan sisi '+a+' cm adalah ...',a:[String(4*a)+' cm',String(2*a)+' cm',String(a*a)+' cm'],c:0,e:'Keliling persegi = 4 kali panjang sisi.'});
+ else if(b===1)shapes.push({q:'Banyak sisi pada '+a+' segitiga adalah ...',a:[String(a*3),String(a*4),String(a*2)],c:0,e:'Setiap segitiga memiliki 3 sisi.'});
+ else shapes.push({q:'Banyak sudut pada '+a+' persegi adalah ...',a:[String(a*4),String(a*3),String(a*2)],c:0,e:'Setiap persegi memiliki 4 sudut.'});
+}
+addUnique('shape',shapes);
+addUnique('nusantara',original.history.concat(original.mobon));
+addUnique('science',original.truefalse.concat(original.nusantara.slice(0,15)));
+addUnique('story',original.spell.concat(original.mobon.slice(0,20)));
+addUnique('history',original.nusantara.concat(original.mobon));
+addUnique('mobon',original.nusantara.concat(original.history));
+addUnique('spell',original.story);
+addUnique('english',original.story.slice(0,10)); // latihan makna cerita pendamping kosakata
 const wordPool=('BUKU MOBON PANTAI SEKOLAH CERITA ILMU LAUT SAMUDRA MABA BULI WASILE BICOLI HALMAHERA KELUARGA BELAJAR MEMBACA MENULIS PENSIL KERTAS HALAMAN PERAHU KAPAL NELAYAN PELANGI MATAHARI ANGIN HUJAN AWAN BINTANG BULAN HUTAN BUNGA AKAR DAUN POHON TUMBUHAN SAHABAT KASIH SAYANG EMPATI MIMPI HARAPAN SENYUM BUDAYA TARIAN NUSANTARA INDONESIA SEJARAH ANGKA HITUNG BAHASA HURUF GURU MURID KELAS PERPUSTAKAAN PELABUHAN KAMPUNG DESA PEDULI BERBAGI KERJASAMA BELANJA TABUNGAN SEMESTA KREATIF PENEMUAN KEJUJURAN LINGKUNGAN MANGROVE TERUMBU KARANG KOMPAS PETA PETUALANGAN').split(' ').filter(function(x){return x.length>=4&&x.length<=13;}).filter(function(x,i,a){return a.indexOf(x)===i;});
 const memoryPool='📚|🌊|🌿|⭐|🧭|🧠|🎓|🧩|🌈|🦋|🐠|🐢|🦀|🐬|🚀|🎵|🎨|🛶|🏛️|🌺|🔬|🍎|🪴|☀️|🌙|🍌|⚓|💡|✏️|📖'.split('|');
 function identity(){
