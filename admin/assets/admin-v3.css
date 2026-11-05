@@ -55,3 +55,15 @@
 #bookForm .smart-retry-photo:disabled{opacity:.6;cursor:progress}
 #bookForm .smart-photo-status{line-height:1.55}
 @media(max-width:390px){#bookForm #bookCoverPreview:not(.hidden){width:76px;height:108px}#bookForm .smart-retry-photo{padding:8px 6px;font-size:.75rem}}
+
+/* OCR buku: tampilkan pilihan judul dan penulis dari satu foto. */
+#bookForm .smart-ocr-choice-panel{width:100%;display:flex;flex-direction:column;gap:8px;min-width:0}
+#bookForm .smart-ocr-choice-panel>b{font-size:.94rem;color:#164c52}
+#bookForm .smart-ocr-choice-panel>small{display:block;line-height:1.4}
+#bookForm .smart-ocr-options{display:grid;gap:7px;background:#f5f8f3;padding:10px;border-radius:11px;border:1px solid #dbe6d9}
+#bookForm .smart-ocr-options strong{font-size:.82rem;color:#354b48}
+#bookForm .smart-ocr-options button{font:inherit;border:1px solid #b7cfc6;border-radius:9px;background:#fff;min-height:41px;text-align:left;padding:8px 11px;color:#215052;cursor:pointer;white-space:normal;overflow-wrap:anywhere;line-height:1.35}
+#bookForm .smart-ocr-options button:focus-visible{outline:2px solid #a87a38;outline-offset:2px}
+#bookForm .smart-ocr-options button:active{background:#dfeee6}
+#bookForm .smart-book-result .smart-ocr-choice-panel{max-width:100%}
+@media(max-width:540px){#bookForm .smart-ocr-options{padding:8px}#bookForm .smart-ocr-options button{font-size:.85rem}}
