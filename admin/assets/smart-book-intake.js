@@ -126,79 +126,144 @@ function init(){
     let overlap=0;aa.forEach(t=>{if(bb.has(t))overlap++;});
     return overlap/Math.max(1,Math.min(aa.size,bb.size));
   }
+  function withDeadline(promise,ms,message){
+    let timer;
+    return Promise.race([
+      promise,
+      new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(message)),ms);})
+    ]).finally(()=>clearTimeout(timer));
+  }
   function scriptForOCR(){
     if(window.Tesseract?.createWorker)return Promise.resolve(window.Tesseract);
     if(window.__eomTesseractLoading)return window.__eomTesseractLoading;
-    window.__eomTesseractLoading=new Promise((resolve,reject)=>{
-      const script=document.createElement('script');
-      script.src='https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js';
-      script.crossOrigin='anonymous';
-      script.onload=()=>window.Tesseract?.createWorker?resolve(window.Tesseract):reject(new Error('Modul pembaca foto belum siap.'));
-      script.onerror=()=>reject(new Error('Modul OCR tidak dapat diunduh. Periksa internet atau gunakan ISBN manual.'));
-      document.head.appendChild(script);
-    }).catch(err=>{window.__eomTesseractLoading=null;throw err;});
+    const sources=[
+      'https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/dist/tesseract.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/6.0.1/tesseract.min.js'
+    ];
+    async function load(src){
+      return withDeadline(new Promise((resolve,reject)=>{
+        const script=document.createElement('script');
+        script.src=src;script.async=true;script.crossOrigin='anonymous';
+        script.onload=()=>window.Tesseract?.createWorker?resolve(window.Tesseract):reject(new Error('Mesin OCR tidak siap.'));
+        script.onerror=()=>reject(new Error('Penyedia OCR tidak bisa diakses.'));
+        document.head.appendChild(script);
+      }),22000,'Unduhan mesin OCR melewati batas waktu.');
+    }
+    window.__eomTesseractLoading=(async()=>{
+      for(const src of sources){
+        try{return await load(src);}
+        catch(e){console.warn('Echo of Mobon: beralih server OCR',e.message);}
+      }
+      throw new Error('Mesin pembaca foto tidak dapat dimuat. Periksa jaringan internet atau coba ISBN pada sampul belakang.');
+    })().catch(e=>{window.__eomTesseractLoading=null;throw e;});
     return window.__eomTesseractLoading;
   }
   async function readText(file,id){
-    setStatus('🔠 Membaca tulisan di sampul menggunakan OCR pada perangkat…',false);
+    setStatus('🔠 Memuat mesin pembaca tulisan. Pemindaian pertama bisa lebih lama karena perlu mengunduh data bahasa…',false);
     const t=await scriptForOCR();
+    if(id!==requestId)return '';
     let worker;
     try{
-      worker=await t.createWorker(['ind','eng'],1,{
-        logger:msg=>{
+      worker=await withDeadline(t.createWorker('eng',1,{
+        logger:message=>{
           if(id!==requestId)return;
-          if(msg.status==='recognizing text'&&Number.isFinite(msg.progress)){
-            setStatus('🔠 Membaca teks sampul: '+Math.round(msg.progress*100)+'%…',false);
+          if(message.status==='recognizing text'&&Number.isFinite(message.progress)){
+            setStatus('🔠 Membaca tulisan di foto: '+Math.round(message.progress*100)+'%…',false);
+          }else if(message.status==='loading language traineddata'){
+            setStatus('🌐 Mengunduh data pembaca tulisan untuk pertama kali…',false);
           }
         }
-      });
-    }catch(error){
-      worker=await t.createWorker('eng');
+      }),90000,'Pengunduhan OCR terlalu lama. Periksa jaringan internet.');
+      if(id!==requestId)return '';
+      const inputImage=await EOMONLINE.image(file,1800,.9);
+      const recognized=await withDeadline(worker.recognize(inputImage||file),85000,'Foto sulit dibaca atau pemindaian terlalu lama. Silakan coba foto lain.');
+      return String(recognized?.data?.text||'').trim();
+    }finally{
+      if(worker)await Promise.race([worker.terminate().catch(()=>{}),new Promise(r=>setTimeout(r,2500))]);
     }
-    try{
-      const result=await worker.recognize(coverUrl.value||file);
-      return String(result?.data?.text||'').trim();
-    }finally{await worker.terminate().catch(()=>{});}
+  }
+  function showRecognizedText(text,parsed,found){
+    const current=esc(parsed.candidate||'Belum dikenali');
+    result.classList.remove('hidden');
+    result.innerHTML='<div style="width:100%"><b>📖 Hasil pembacaan foto</b>'+
+      '<small>Judul: '+current+'</small>'+
+      '<small>Penulis: '+esc(parsed.author||'Belum ditemukan')+
+      ' · Penerbit: '+esc(parsed.publisher||'Belum ditemukan')+'</small>'+
+      (found?'<small>ISBN: '+esc(found)+'</small>':'')+
+      '<details class="smart-ocr-raw"><summary>Lihat teks yang terbaca (untuk koreksi)</summary><pre>'+
+      esc(text.slice(0,1800))+'</pre></details></div>';
   }
   async function recognize(file,id){
-    setStatus('🔎 Memindai barcode atau teks sampul…',false);
-    try{
-      const meta=await EOMBOOKMETA.smartFromPhoto(file);
-      if(id!==requestId)return;
-      if(meta?.title){applyMeta(meta);return;}
-    }catch(e){/* Lanjut OCR jika browser tidak mendukung pemindaian bawaan. */}
+    setStatus('🔎 Memeriksa barcode ISBN pada foto…',false);
+    let barcode='';
+    try{barcode=await withDeadline(EOMBOOKMETA.detectFile(file),12000,'Pemindaian barcode terlalu lama.');}
+    catch(e){/* BarcodeDetector tidak tersedia di semua HP. Lanjut dengan OCR. */}
+    if(id!==requestId)return;
+    let isbnFromBarcode=EOMBOOKMETA.normalizeIsbn((barcode||'').replace(/^ISBN[:\s-]*/i,''));
+    if(!/^(?:97[89]\d{10}|\d{9}[\dX])$/.test(isbnFromBarcode))isbnFromBarcode='';
+    if(isbnFromBarcode){
+      isbnInput.value=isbnFromBarcode;isbnField.value=isbnFromBarcode;
+      setStatus('🔎 Barcode ISBN '+isbnFromBarcode+' ditemukan. Mengambil data buku…',false);
+      try{
+        const meta=await withDeadline(EOMBOOKMETA.lookupIsbn(isbnFromBarcode),16000,'Pencarian ISBN terlalu lama.');
+        if(id!==requestId)return;
+        if(meta?.title){applyMeta(meta);return;}
+      }catch(error){console.warn('ISBN metadata belum ditemukan',error.message);}
+    }
     let text='';
     try{text=await readText(file,id);}
-    catch(error){if(id===requestId)setStatus('📸 Sampul tersimpan. Pembacaan teks otomatis belum tersedia: '+error.message+' Anda masih dapat mengisi data manual.',true);return;}
-    if(id!==requestId)return;
-    const found=getIsbnFromText(text);
-    if(found){
-      isbnInput.value=found;isbnField.value=found;
-      setStatus('🔎 ISBN '+found+' ditemukan. Mencari metadata…',false);
-      try{const meta=await EOMBOOKMETA.lookupIsbn(found);if(meta){applyMeta(meta);return;}}catch(e){}
-    }
-    const parsed=extractCoverText(text);
-    if(parsed.candidate){
-      setStatus('🔎 Teks sampul dikenali. Memeriksa kecocokan judul…',false);
-      try{
-        const meta=await EOMBOOKMETA.searchText(parsed.candidate);
-        if(id!==requestId)return;
-        if(meta?.title&&similarity(parsed.candidate,meta.title)>=0.6){applyMeta(meta);return;}
-      }catch(e){}
+    catch(error){
       if(id!==requestId)return;
-      if(!title.value)title.value=parsed.candidate;
-      if(parsed.author&&!author.value)author.value=parsed.author;
-      if(parsed.publisher&&!publisher.value)publisher.value=parsed.publisher;
-      if(parsed.publication_year&&!year.value)year.value=String(parsed.publication_year);
-      guessCategory({title:title.value});
-      result.classList.remove('hidden');
-      result.innerHTML='<div><b>📝 Data terbaca dari foto</b><small>Judul: '+esc(parsed.candidate)+
-        '</small><small>Penulis: '+esc(parsed.author||'belum terbaca')+
-        ' · Penerbit: '+esc(parsed.publisher||'belum terbaca')+'</small></div>';
-      setStatus('✅ Kolom hasil baca foto sudah terisi sejauh terbaca. Periksa data buku, lalu tekan Simpan Buku.',false);
+      try{text=await EOMBOOKMETA.detectTextFile(file);}catch(e){}
+      if(!text){
+        setStatus('⚠️ Mesin pembaca tulisan tidak berhasil: '+error.message+' Coba foto lebih dekat atau pindai barcode ISBN.',true);
+        return;
+      }
+    }
+    if(id!==requestId)return;
+    if(!text){
+      setStatus('⚠️ Teks sampul belum dapat dibaca. Pastikan foto terang, tidak miring, dan tulisan terlihat jelas. Coba foto ulang.',true);
       return;
     }
-    setStatus('📸 Foto sampul telah disiapkan. Teks belum terbaca jelas. Silakan foto ulang lebih dekat atau isi ISBN manual.',true);
+    const parsed=extractCoverText(text);
+    const found=getIsbnFromText(text)||isbnFromBarcode;
+    if(found){isbnInput.value=found;isbnField.value=found;}
+    if(parsed.candidate){
+      // Mengisi kolom SEKARANG, tidak menunggu jaringan metadata.
+      title.value=parsed.candidate;
+      if(parsed.author)author.value=parsed.author;
+      if(parsed.publisher)publisher.value=parsed.publisher;
+      if(parsed.publication_year)year.value=String(parsed.publication_year);
+      guessCategory({title:parsed.candidate});
+      showRecognizedText(text,parsed,found);
+      setStatus('✅ Teks berhasil dibaca dan kolom terisi otomatis. Periksa hasilnya sebelum Simpan Buku.',false);
+    }else{
+      result.classList.remove('hidden');
+      result.innerHTML='<details class="smart-ocr-raw" open><summary>Teks foto yang berhasil dibaca</summary><pre>'+esc(text.slice(0,1800))+'</pre></details>';
+      setStatus('📝 Tulisan foto terbaca, tetapi judul belum jelas. Anda dapat menyalin dari hasil pembacaan di bawah.',true);
+    }
+    if(id!==requestId)return;
+    if(found){
+      setStatus('🔍 Mencocokkan ISBN dengan database buku…',false);
+      try{
+        const meta=await withDeadline(EOMBOOKMETA.lookupIsbn(found),16000,'Pencarian ISBN terlalu lama.');
+        if(id===requestId&&meta?.title){applyMeta(meta);return;}
+      }catch(error){console.warn('Pencarian ISBN',error.message);}
+      if(id===requestId)setStatus('✅ Data yang terbaca dari foto sudah masuk kolom. ISBN belum ditemukan dalam katalog daring; periksa lalu Simpan Buku.',false);
+      return;
+    }
+    if(parsed.candidate.length>=5&&parsed.candidate.split(' ').length>=2){
+      setStatus('🔍 Mencocokkan judul dengan katalog, data foto sudah dapat diedit…',false);
+      try{
+        const meta=await withDeadline(EOMBOOKMETA.searchText(parsed.candidate),17000,'Pencarian judul terlalu lama.');
+        if(id!==requestId)return;
+        if(meta?.title&&similarity(parsed.candidate,meta.title)>=0.75){
+          applyMeta({...meta,author:meta.author||parsed.author,publisher:meta.publisher||parsed.publisher});
+          return;
+        }
+      }catch(error){console.warn('Pencarian judul',error.message);}
+      if(id===requestId)setStatus('✅ Tulisan foto telah dibaca dan dimasukkan. Metadata tambahan tidak ditemukan. Mohon periksa kolom sebelum menyimpan.',false);
+    }
   }
   async function handlePhoto(file){
     if(!file)return;
