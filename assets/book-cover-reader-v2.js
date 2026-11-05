@@ -112,7 +112,7 @@ function parse(result){
     if(used.has(j)||!next||stop.test(next.text)||reject.test(next.text)){blocked=true;break;}
     const a=lines[i],b=next;
     if(j>i&&a.y!==null&&b.y!==null&&a.height&&Math.abs((b.y||0)-(lines[j-1]?.y||0))>a.height*4.5){blocked=true;break;}
-    if(j>i&&/^[A-ZÀ-Ý\d\s]+$/.test(parts.join(' '))&&/^(?:[A-ZÀ-ÖØ-Þ][\p{L}'’.-]+\s+){1,3}[A-ZÀ-ÖØ-Þ][\p{L}'’.-]+$/u.test(next.text)){blocked=true;break;}
+    if(j>i&&/^[A-ZÀ-Ý\d\s]+$/.test(parts.join(' '))&&/[a-zà-ÿ]/.test(next.text)&&/^(?:[A-ZÀ-ÖØ-Þ][\p{L}'’.-]+\s+){1,3}[A-ZÀ-ÖØ-Þ][\p{L}'’.-]+$/u.test(next.text)){blocked=true;break;}
     parts.push(next.text);
    }
    if(blocked)break;
