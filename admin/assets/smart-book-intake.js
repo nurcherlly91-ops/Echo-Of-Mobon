@@ -118,7 +118,7 @@ function init(){
     clearTimeout(autoIsbnTimer);
     const value=EOMBOOKMETA.normalizeIsbn(isbnInput.value.trim()||isbnField.value.trim());
     if(!value){setStatus('Masukkan ISBN buku lebih dahulu.',true);return;}
-    if(!/^(?:\\d{10}|\\d{13}|\\d{9}X)$/.test(value)){
+    if(!/^(?:\d{10}|\d{13}|\d{9}X)$/.test(value)){
       setStatus('ISBN harus memiliki 10 atau 13 karakter. Periksa angka terakhir.',true);
       return;
     }
@@ -148,7 +148,7 @@ function init(){
     clearTimeout(autoIsbnTimer);
     autoIsbnSequence++;
     if(!value){setStatus('📸 Pilih foto atau isi ISBN untuk mengisi data otomatis.',false);return;}
-    if(!/^(?:\\d{10}|\\d{13}|\\d{9}X)$/.test(value)){
+    if(!/^(?:\d{10}|\d{13}|\d{9}X)$/.test(value)){
       setStatus('✍️ ISBN sedang diketik ('+value.length+' karakter). Pencarian otomatis berjalan setelah 10 atau 13 karakter.',false);
       return;
     }
