@@ -40,3 +40,8 @@
 #bookForm .smart-ocr-raw pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:170px;overflow:auto;background:#f5f2e9;border-radius:8px;padding:10px;font-family:inherit;line-height:1.45}
 #bookForm .smart-photo-status{min-height:43px}
 #bookForm .smart-intake-head small{line-height:1.5}
+
+/* Saran kategori & genre otomatis dari foto/judul. */
+#bookForm .smart-auto-label{display:block;margin-top:9px;padding:8px 11px;border-radius:10px;background:#e7f5e9;border:1px solid #bfdec9;color:#225e3e;line-height:1.45;font-size:.82rem}
+#bookForm #smartBookFormPanel[data-auto-classification]:not([data-auto-classification=""]) .smart-intake-head b::after{content:"  ✓";color:#187744}
+#bookForm select#bookGenre,#bookForm select#bookCategory{min-height:45px}
