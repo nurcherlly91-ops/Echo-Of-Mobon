@@ -74,7 +74,7 @@ function init(){
   function reset(){
     requestId++;
     capturedCover=false;scanning=false;
-    photo.value='';gallery.value='';coverPhoto.value='';isbnInput.value='';
+    photo.value='';gallery.value='';isbnInput.value='';
     publisher.value='';year.value='';isbnField.value='';
     setCover('');
     result.innerHTML='';result.classList.add('hidden');
