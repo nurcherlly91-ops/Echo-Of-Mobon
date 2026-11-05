@@ -3,22 +3,169 @@ const SUPABASE_KEY = "sb_publishable_PTEMMAN_M7wpxMz34zImlg_ic357XNP";
 
 const SB = (() => {
   const sessionKey = "eom_supabase_session";
-  const baseHeaders = () => ({"apikey": SUPABASE_KEY,"Content-Type": "application/json"});
-  function getSession(){try{return JSON.parse(localStorage.getItem(sessionKey)||"null")}catch{return null}}
-  function setSession(s){if(s)localStorage.setItem(sessionKey,JSON.stringify(s));else localStorage.removeItem(sessionKey)}
-  function authHeaders(token){const h=baseHeaders();h.Authorization=`Bearer ${token||SUPABASE_KEY}`;return h}
-  async function request(path,opts={}){const res=await fetch(SUPABASE_URL+path,opts);let data=null;const text=await res.text();if(text){try{data=JSON.parse(text)}catch{data=text}}if(!res.ok){const msg=data?.message||data?.error_description||data?.hint||data?.details||data?.code||text||`HTTP ${res.status}`;throw new Error(msg)}return data}
-  async function login(email,password){const data=await request("/auth/v1/token?grant_type=password",{method:"POST",headers:baseHeaders(),body:JSON.stringify({email,password})});setSession(data);return data}
-  async function signup(email,password,fullName){return await request("/auth/v1/signup",{method:"POST",headers:baseHeaders(),body:JSON.stringify({email,password,data:{full_name:fullName}})})}
-  async function refreshSession(){const s=getSession();if(!s?.refresh_token)return null;try{const data=await request("/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:baseHeaders(),body:JSON.stringify({refresh_token:s.refresh_token})});setSession(data);return data}catch{setSession(null);return null}}
-  async function session(){let s=getSession();if(!s)return null;const expiresAt=s.expires_at||0;if(expiresAt&&Date.now()/1000>expiresAt-60)s=await refreshSession();return s}
-  async function logout(){const s=getSession();if(s?.access_token){try{await request("/auth/v1/logout",{method:"POST",headers:authHeaders(s.access_token)})}catch{}}setSession(null)}
-  async function select(table,query="",token=null){return await request(`/rest/v1/${table}?${query}`,{headers:authHeaders(token)})}
-  async function insert(table,row,token=null){const h=authHeaders(token);h.Prefer="return=representation";return await request(`/rest/v1/${table}`,{method:"POST",headers:h,body:JSON.stringify(row)})}
-  async function update(table,filter,patch,token=null){const h=authHeaders(token);h.Prefer="return=representation";return await request(`/rest/v1/${table}?${filter}`,{method:"PATCH",headers:h,body:JSON.stringify(patch)})}
-  async function remove(table,filter,token=null){const h=authHeaders(token);h.Prefer="return=representation";return await request(`/rest/v1/${table}?${filter}`,{method:"DELETE",headers:h})}
-  async function rpc(name,args={},token=null){return await request(`/rest/v1/rpc/${name}`,{method:"POST",headers:authHeaders(token),body:JSON.stringify(args)})}
-  return {login,signup,session,logout,select,insert,update,remove,rpc,getSession,setSession}
+  let refreshing = null;
+  const baseHeaders = () => ({"apikey": SUPABASE_KEY,"Content-Type":"application/json"});
+  function getSession(){
+    try{return JSON.parse(localStorage.getItem(sessionKey)||"null");}
+    catch{return null;}
+  }
+  function jwtExpiry(token){
+    if(typeof token!=="string"||token.split(".").length!==3)return 0;
+    try{
+      const encoded=token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/");
+      const padding="=".repeat((4-encoded.length%4)%4);
+      const claims=JSON.parse(atob(encoded+padding));
+      return Number(claims.exp)||0;
+    }catch{return 0;}
+  }
+  function setSession(s){
+    if(!s){localStorage.removeItem(sessionKey);return;}
+    const expiry=Number(s.expires_at)||jwtExpiry(s.access_token)||
+      (s.expires_in?Math.floor(Date.now()/1000)+Number(s.expires_in):0);
+    const safe={...s,expires_at:expiry};
+    localStorage.setItem(sessionKey,JSON.stringify(safe));
+  }
+  function announce(name){
+    try{window.dispatchEvent(new Event(name));}catch(e){}
+  }
+  function isInvalidRefresh(e){
+    return /invalid.refresh.token|refresh.token.not.found|refresh_token_not_found|already.used|invalid.grant|session.not.found|refresh.token.expired|token.revoked/i.test(String(e?.message||e||""));
+  }
+  function authHeaders(token){
+    const headers=baseHeaders();
+    headers.Authorization="Bearer "+(token||SUPABASE_KEY);
+    return headers;
+  }
+  async function rawRequest(path,opts={}){
+    const res=await fetch(SUPABASE_URL+path,opts);
+    const body=await res.text();
+    let data=null;
+    if(body){try{data=JSON.parse(body);}catch{data=body;}}
+    if(!res.ok){
+      const message=data?.message||data?.error_description||data?.msg||data?.hint||
+        data?.details||data?.error||data?.code||body||"HTTP "+res.status;
+      const error=new Error(String(message));
+      error.status=res.status;
+      error.code=data?.code||"";
+      throw error;
+    }
+    return data;
+  }
+  async function refreshSession(){
+    if(refreshing)return refreshing;
+    refreshing=(async()=>{
+      const before=getSession();
+      if(!before?.refresh_token){
+        setSession(null);announce("eom:admin-session-expired");return null;
+      }
+      try{
+        const response=await rawRequest("/auth/v1/token?grant_type=refresh_token",{
+          method:"POST",headers:baseHeaders(),
+          body:JSON.stringify({refresh_token:before.refresh_token})
+        });
+        if(!response?.access_token||!response?.refresh_token)throw new Error("Sesi baru tidak lengkap.");
+        setSession(response);
+        announce("eom:admin-session-refreshed");
+        return getSession();
+      }catch(e){
+        const latest=getSession();
+        // A second tab may already have rotated the refresh token.
+        if(latest?.refresh_token&&latest.refresh_token!==before.refresh_token&&latest.access_token){
+          return latest;
+        }
+        if(isInvalidRefresh(e)||e.status===400||e.status===401){
+          setSession(null);
+          announce("eom:admin-session-expired");
+          return null;
+        }
+        // Connectivity problems should not silently destroy a valid login.
+        throw e;
+      }
+    })();
+    try{return await refreshing;}finally{refreshing=null;}
+  }
+  async function session(){
+    let current=getSession();
+    if(!current?.access_token)return null;
+    const expiry=Number(current.expires_at)||jwtExpiry(current.access_token);
+    if(expiry){
+      if(Date.now()/1000>=expiry-90)current=await refreshSession();
+    }else if(current.refresh_token){
+      current=await refreshSession();
+    }
+    if(!current?.access_token)return null;
+    return current;
+  }
+  async function login(email,password){
+    const data=await rawRequest("/auth/v1/token?grant_type=password",{
+      method:"POST",headers:baseHeaders(),body:JSON.stringify({email,password})
+    });
+    setSession(data);
+    return getSession();
+  }
+  async function signup(email,password,fullName){
+    return rawRequest("/auth/v1/signup",{
+      method:"POST",headers:baseHeaders(),
+      body:JSON.stringify({email,password,data:{full_name:fullName}})
+    });
+  }
+  async function request(path,opts={}){
+    try{return await rawRequest(path,opts);}
+    catch(e){
+      const authorization=opts?.headers?.Authorization||opts?.headers?.authorization||"";
+      if(!/^Bearer\s+/i.test(authorization)||path.startsWith("/auth/v1/")||
+        !/jwt expired|token.*expired|expired.*jwt|pgrst301/i.test(String(e.message||""))){
+        throw e;
+      }
+      const oldToken=authorization.replace(/^Bearer\s+/i,"").trim();
+      if(!oldToken||oldToken===SUPABASE_KEY)throw e;
+      let current=getSession();
+      if(!current?.access_token)throw new Error("Sesi Admin telah berakhir. Silakan masuk kembali.");
+      if(current.access_token===oldToken)current=await refreshSession();
+      else current=await session();
+      if(!current?.access_token)throw new Error("Sesi Admin telah berakhir. Silakan masuk kembali.");
+      const retried={...opts,headers:{...opts.headers,Authorization:"Bearer "+current.access_token}};
+      return rawRequest(path,retried);
+    }
+  }
+  async function loggedInToken(token){
+    if(!token||token===SUPABASE_KEY)return token;
+    const current=await session();
+    if(!current?.access_token)throw new Error("Sesi Admin telah berakhir. Silakan masuk kembali.");
+    return current.access_token;
+  }
+  async function logout(){
+    const old=getSession();
+    setSession(null);
+    if(old?.access_token){
+      try{await rawRequest("/auth/v1/logout",{method:"POST",headers:authHeaders(old.access_token)});}
+      catch(e){}
+    }
+  }
+  async function select(table,query="",token=null){
+    return request("/rest/v1/"+table+"?"+query,{headers:authHeaders(await loggedInToken(token))});
+  }
+  async function insert(table,row,token=null){
+    const headers=authHeaders(await loggedInToken(token));
+    headers.Prefer="return=representation";
+    return request("/rest/v1/"+table,{method:"POST",headers,body:JSON.stringify(row)});
+  }
+  async function update(table,filter,patch,token=null){
+    const headers=authHeaders(await loggedInToken(token));
+    headers.Prefer="return=representation";
+    return request("/rest/v1/"+table+"?"+filter,{method:"PATCH",headers,body:JSON.stringify(patch)});
+  }
+  async function remove(table,filter,token=null){
+    return request("/rest/v1/"+table+"?"+filter,{
+      method:"DELETE",headers:authHeaders(await loggedInToken(token))
+    });
+  }
+  async function rpc(name,args={},token=null){
+    return request("/rest/v1/rpc/"+name,{
+      method:"POST",headers:authHeaders(await loggedInToken(token)),body:JSON.stringify(args)
+    });
+  }
+  return {login,signup,session,logout,select,insert,update,remove,rpc,getSession,setSession,refreshSession};
 })();
 
 const EOMONLINE={
