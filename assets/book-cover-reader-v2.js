@@ -87,6 +87,9 @@ function parse(result){
   if(medium&&first.height<medium*.72)score-=5;
   if(tokens.length>=2&&tokens.length<=11)score+=5;
   if(parts.length===2)score+=2;
+  if(parts.length===2&&parts[0].split(/\s+/).length===1&&/^[A-ZÀ-Ý\s]+$/.test(parts.join(' '))&&parts[1].length>=7)score+=10;
+  if(/^buku cerita anak$/i.test(candidate))score-=25;
+  if(parts.length>1&&/^buku cerita anak$/i.test(parts[0]))score-=18;
   if(parts.length===3)score-=2;
   if(/\b(dan|yang|di|ke|untuk|the|of|and|dari|serta)\s*$/i.test(candidate))score-=12;
   if(/\b(dan|yang|di|ke|untuk|the|of|and|dari|serta)\s*$/i.test(parts[0])&&parts.length>1)score+=9;
@@ -109,6 +112,7 @@ function parse(result){
     if(used.has(j)||!next||stop.test(next.text)||reject.test(next.text)){blocked=true;break;}
     const a=lines[i],b=next;
     if(j>i&&a.y!==null&&b.y!==null&&a.height&&Math.abs((b.y||0)-(lines[j-1]?.y||0))>a.height*4.5){blocked=true;break;}
+    if(j>i&&/^[A-ZÀ-Ý\d\s]+$/.test(parts.join(' '))&&/^(?:[A-ZÀ-ÖØ-Þ][\p{L}'’.-]+\s+){1,3}[A-ZÀ-ÖØ-Þ][\p{L}'’.-]+$/u.test(next.text)){blocked=true;break;}
     parts.push(next.text);
    }
    if(blocked)break;
@@ -129,7 +133,7 @@ function parse(result){
  function candidateAuthor(t,i,reason,score){
   let text=clean(t).replace(/^(?:oleh|by|penulis|author|ditulis oleh)\s*[:：-]?\s*/i,'');
   if(!valid(text)||reject.test(text)||stop.test(text)||/\b(?:buku|tamu|cerita|hewan|laut|anak|seri|kelas|jilid|volume|sains|sejarah|belajar|penerbit)\b/i.test(text))return;
-  if(text.split(/\s+/).length>7||text.split(/\s+/).length<2)return;
+  if(text.split(/\s+/).length>7||text.split(/\s+/).length<(score>=75?1:2))return;
   if(title&&norm(text)===norm(title))return;
   authorOptions.push({text,score,reason,index:i,type:'author'});
  }
