@@ -87,6 +87,10 @@ function cleanupURL(){
  if(objectURL){URL.revokeObjectURL(objectURL);objectURL='';}
 }
 function open(){
+ if($('#smartBookFormPanel')?.classList?.contains?.('smart-photo-loading')){
+  const status=$('#smartBookStatus');if(status)status.textContent='Pemindaian otomatis sedang berjalan. Setelah selesai, klik Perbaiki Judul / Penulis dari Foto Ini.';
+  return;
+ }
  file=file||$('#smartBookPhoto')?.files?.[0]||$('#smartBookGallery')?.files?.[0];
  if(!file){const status=$('#smartBookStatus');if(status)status.textContent='Ambil atau pilih satu foto sampul dahulu.';return;}
  const dialog=ensureDialog();cleanupURL();
