@@ -171,7 +171,7 @@ function init(){
       worker=await t.createWorker('eng');
     }
     try{
-      const result=await worker.recognize(file);
+      const result=await worker.recognize(coverUrl.value||file);
       return String(result?.data?.text||'').trim();
     }finally{await worker.terminate().catch(()=>{});}
   }
@@ -256,7 +256,7 @@ function init(){
     const nQty=Math.max(1,Math.floor(Number(qty.value)||1));
     const nRack=Math.max(1,Math.floor(Number(rack.value)||1));
     const pubYear=year.value?Number(year.value):null;
-    const submit=form.querySelector('button[type="submit"]')||form.querySelector('.btn.primary');
+    const submit=form.querySelector('button[type="submit"]')||form.querySelector('.form > button.btn.primary');
     if(submit)submit.disabled=true;
     try{
       const session=await SB.session();
