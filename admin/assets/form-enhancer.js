@@ -2,7 +2,7 @@
 function init(){
   if(window.__eomFormEnhancerLoaded)return;window.__eomFormEnhancerLoaded=true;
   const bookForm=document.getElementById('bookForm'),digitalForm=document.getElementById('digitalForm');
-  if(!bookForm||!digitalForm||!window.SB)return;
+  if(!bookForm||!digitalForm||typeof SB==='undefined')return;
 
   function makeGenreField(id,label='Genre Buku'){
     const wrap=document.createElement('label');wrap.textContent=label;
