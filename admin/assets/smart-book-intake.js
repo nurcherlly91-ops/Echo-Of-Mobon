@@ -8,35 +8,10 @@ function init(){
   const byId=id=>document.getElementById(id);
   const title=byId('bookTitle'),author=byId('bookAuthor'),category=byId('bookCategory'),level=byId('bookLevel'),qty=byId('bookQty'),rack=byId('bookRack'),description=byId('bookDescription');
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const box=document.createElement('section');
-  box.className='smart-intake-card';
-  box.innerHTML=[
-    '<div class="smart-intake-head"><div><b>📸 Foto Buku → Data Otomatis</b>',
-    '<small>Foto sampul depan atau barcode ISBN. Judul, penulis, penerbit, tahun, ISBN, dan sampul diisi otomatis bila dapat dikenali.</small></div></div>',
-    '<div class="smart-photo-actions">',
-    '<button id="smartBookCameraBtn" type="button" class="btn primary">📸 Ambil Foto Buku</button>',
-    '<button id="smartBookGalleryBtn" type="button" class="btn ghost">🖼️ Pilih dari Galeri</button></div>',
-    '<input id="smartBookPhoto" class="smart-file-input" type="file" accept="image/*" capture="environment" aria-label="Foto buku menggunakan kamera">',
-    '<input id="smartBookGallery" class="smart-file-input" type="file" accept="image/*" aria-label="Pilih foto buku dari galeri">',
-    '<div class="smart-intake-grid"><label>Atau ketik ISBN (jika ada)',
-    '<input id="smartBookIsbn" type="text" inputmode="numeric" placeholder="Contoh: 978602..." autocomplete="off"></label>',
-    '<div class="smart-intake-lookup"><button id="smartBookLookup" type="button" class="btn ghost">🔍 Cari Data ISBN</button></div></div>',
-    '<div id="smartBookStatus" class="smart-photo-status" role="status" aria-live="polite">📖 Foto buku akan dibaca di HP; data tetap bisa diperiksa dan diperbaiki.</div>',
-    '<div id="smartBookResult" class="smart-book-result hidden"></div>'
-  ].join('');
-  form.querySelector('h2')?.after(box);
-  const desc=description?.closest('label'),extra=document.createElement('div');
-  extra.className='smart-extra-fields';
-  extra.innerHTML=[
-    '<div class="grid2"><label>Penerbit<input id="bookPublisher" autocomplete="off"></label>',
-    '<label>Tahun Terbit<input id="bookYear" type="number" min="1000" max="2100"></label></div>',
-    '<div class="grid2"><label>ISBN<input id="bookIsbn" autocomplete="off"></label>',
-    '<label>Foto Sampul Buku (opsional)<input id="bookCoverPhoto" type="file" accept="image/*" capture="environment"></label></div>',
-    '<input id="bookCoverUrl" type="hidden"><img id="bookCoverPreview" class="smart-cover-preview hidden" alt="Pratinjau sampul buku">'
-  ].join('');
-  desc?.before(extra);
+  const box=byId('smartBookFormPanel');
+  if(!box)return;
   const photo=byId('smartBookPhoto'),gallery=byId('smartBookGallery'),isbnInput=byId('smartBookIsbn'),lookup=byId('smartBookLookup'),status=byId('smartBookStatus'),result=byId('smartBookResult');
-  const publisher=byId('bookPublisher'),year=byId('bookYear'),isbnField=byId('bookIsbn'),coverPhoto=byId('bookCoverPhoto'),coverUrl=byId('bookCoverUrl'),coverPreview=byId('bookCoverPreview');
+  const publisher=byId('bookPublisher'),year=byId('bookYear'),isbnField=byId('bookIsbn'),coverUrl=byId('bookCoverUrl'),coverPreview=byId('bookCoverPreview');
   const addBook=byId('addBookBtn');
   let capturedCover=false,scanning=false,requestId=0;
   function setStatus(message,bad){
@@ -107,9 +82,10 @@ function init(){
     updateControls();
   }
   function updateControls(){
-    for(const el of [byId('smartBookCameraBtn'),byId('smartBookGalleryBtn'),lookup]){
-      if(el)el.disabled=scanning;
-    }
+    photo.disabled=scanning;
+    gallery.disabled=scanning;
+    lookup.disabled=scanning;
+    box.classList.toggle('smart-photo-loading',scanning);
   }
   async function findIsbn(){
     const value=isbnInput.value.trim()||isbnField.value.trim();
@@ -228,26 +204,11 @@ function init(){
       if(id===requestId){scanning=false;updateControls();}
     }
   }
-  byId('smartBookCameraBtn').addEventListener('click',()=>photo.click());
-  byId('smartBookGalleryBtn').addEventListener('click',()=>gallery.click());
   photo.addEventListener('change',e=>handlePhoto(e.target.files?.[0]));
   gallery.addEventListener('change',e=>handlePhoto(e.target.files?.[0]));
   isbnInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();findIsbn();}});
   lookup.addEventListener('click',findIsbn);
-  coverPhoto.addEventListener('change',async e=>{
-    const f=e.target.files?.[0];if(!f)return;
-    try{setCover(await EOMONLINE.image(f,950,.76));capturedCover=true;setStatus('📷 Sampul pilihan Anda siap disimpan bersama data buku.',false);}
-    catch(err){setStatus('Foto sampul gagal diproses: '+err.message,true);}
-  });
   addBook?.addEventListener('click',()=>{reset();});
-  const panel=document.querySelector('#tab-books .panel-head');
-  if(panel&&!byId('autoBookPhotoBtn')){
-    const quick=document.createElement('button');
-    quick.id='autoBookPhotoBtn';quick.type='button';quick.className='btn primary';
-    quick.textContent='📸 Foto Buku → Isi Otomatis';
-    quick.addEventListener('click',()=>{addBook?.click();photo.click();});
-    panel.appendChild(quick);
-  }
   form.onsubmit=async e=>{
     e.preventDefault();
     if(scanning){alert('Pembacaan foto masih berjalan. Silakan periksa hasilnya sebelum menyimpan.');return;}
