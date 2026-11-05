@@ -281,7 +281,7 @@ function init(){
       }
       let recognized=await withDeadline(worker.recognize(inputImage),85000,'Pemindaian foto terlalu lama. Coba tombol Baca Ulang Foto Ini.');
       let extracted=String(recognized?.data?.text||'').trim();
-      if(extracted.replace(/[^\\p{L}\\p{N}]/gu,'').length<12){
+      if(extracted.replace(/[^\p{L}\p{N}]/gu,'').length<12){
         setStatus('🔎 Tulisan masih samar. Memperjelas foto yang sama secara otomatis, tanpa memotret lagi…',false);
         try{
           const stronger=enhancedFirst
