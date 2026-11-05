@@ -99,7 +99,25 @@ function open(){
 function loadOCR(){
  if(window.Tesseract?.createWorker)return Promise.resolve(window.Tesseract);
  if(window.__eomTesseractLoading)return window.__eomTesseractLoading;
- return Promise.reject(Error('Mesin OCR belum dimuat. Buka kembali Tambah Buku dan tunggu pembacaan pertama selesai.'));
+ if(window.__eomCropOCROnDemand)return window.__eomCropOCROnDemand;
+ async function load(src){
+  return new Promise((resolve,reject)=>{
+   const script=document.createElement('script'),timer=setTimeout(()=>reject(Error('Unduhan OCR terlalu lama.')),20000);
+   script.src=src;script.async=true;script.crossOrigin='anonymous';
+   script.onload=()=>{clearTimeout(timer);window.Tesseract?.createWorker?resolve(window.Tesseract):reject(Error('Mesin OCR belum siap.'));};
+   script.onerror=()=>{clearTimeout(timer);reject(Error('Jaringan ke pembaca foto tidak tersedia.'));};
+   document.head.appendChild(script);
+  });
+ }
+ window.__eomCropOCROnDemand=(async()=>{
+  const urls=['https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/dist/tesseract.min.js',
+   'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/6.0.1/tesseract.min.js'];
+  for(const url of urls){
+   try{return await load(url);}catch(e){console.warn('Sumber OCR presisi gagal',e.message);}
+  }
+  throw Error('Pembaca tulisan belum dapat dimuat. Periksa internet, lalu pilih area tulisan lagi.');
+ })().catch(e=>{window.__eomCropOCROnDemand=null;throw e;});
+ return window.__eomCropOCROnDemand;
 }
 async function makeWorker(){
  if(worker)return worker;
