@@ -317,16 +317,24 @@ function init(){
     }
   }
   function showRecognizedText(text,parsed,found,suggestion){
-    const current=esc(parsed.candidate||'Belum dikenali');
+    const candidate=parsed.title||parsed.candidate||'';
+    const titleOptions=Array.isArray(parsed.titleCandidates)?parsed.titleCandidates:[];
+    const authorOptions=Array.isArray(parsed.authorCandidates)?parsed.authorCandidates:[];
+    const titleAlternatives=titleOptions.filter(v=>v.text&&v.text!==candidate).slice(0,3);
     result.classList.remove('hidden');
-    result.innerHTML='<div style="width:100%"><b>📖 Hasil pembacaan foto</b>'+
-      '<small>Judul: '+current+'</small>'+
-      '<small>Penulis: '+esc(parsed.author||'Belum ditemukan')+
-      ' · Penerbit: '+esc(parsed.publisher||'Belum ditemukan')+'</small>'+
+    result.innerHTML='<div class="smart-ocr-choice-panel">'+
+      '<b>📖 Hasil pembacaan dari satu foto</b>'+
+      '<small>Judul terdeteksi: '+esc(candidate||'belum yakin')+
+      ' · Penulis: '+esc(parsed.author||'belum cukup pasti')+'</small>'+
       (found?'<small>ISBN: '+esc(found)+'</small>':'')+
       classificationLabel(suggestion)+
-      '<details class="smart-ocr-raw"><summary>Lihat teks yang terbaca (untuk koreksi)</summary><pre>'+
-      esc(text.slice(0,1800))+'</pre></details></div>';
+      (titleAlternatives.length?'<div class="smart-ocr-options"><strong>Judul kurang tepat? Pilih hasil lain:</strong>'+
+        titleAlternatives.map(x=>'<button type="button" data-cover-title="'+esc(x.text)+'">'+esc(x.text)+'</button>').join('')+'</div>':'')+
+      (authorOptions.length?'<div class="smart-ocr-options"><strong>Klik nama penulis jika sesuai dengan sampul:</strong>'+
+        authorOptions.slice(0,4).map(x=>'<button type="button" data-cover-author="'+esc(x.text)+'">'+
+          esc(x.text)+(x.requiresConfirmation?' · perlu dicek':'')+'</button>').join('')+'</div>':'')+
+      '<details class="smart-ocr-raw"><summary>Lihat semua tulisan yang terbaca</summary><pre>'+
+      esc(String(text||'').slice(0,1900))+'</pre></details></div>';
   }
   async function recognize(file,id,enhancedFirst=false){
     setStatus('🔎 Memeriksa barcode ISBN pada foto…',false);
@@ -345,43 +353,57 @@ function init(){
         if(meta?.title){applyMeta(meta);return;}
       }catch(error){console.warn('ISBN metadata belum ditemukan',error.message);}
     }
-    let text='';
+    let nativeText='',ocrResult=null,text='';
     if('TextDetector' in window){
       try{
-        setStatus('🔠 Mencoba pembaca tulisan bawaan HP…',false);
-        text=await withDeadline(EOMBOOKMETA.detectTextFile(file),12000,'Pemindaian lokal terlalu lama.');
-      }catch(e){text='';}
+        nativeText=await withDeadline(EOMBOOKMETA.detectTextFile(file),9000,'Pembaca teks bawaan terlalu lama.');
+      }catch(e){nativeText='';}
     }
-    if(!text||text.trim().length<8){
-      try{text=await readText(file,id,enhancedFirst);}
-      catch(error){
-        if(id!==requestId)return;
-        setStatus('⚠️ Mesin pembaca tulisan tidak berhasil: '+error.message+' Coba foto lebih dekat atau pindai barcode ISBN.',true);
+    try{
+      ocrResult=await readText(file,id,enhancedFirst);
+      text=String(ocrResult?.text||'').trim();
+    }catch(error){
+      if(id!==requestId)return;
+      if(!nativeText){
+        setStatus('⚠️ Pembacaan foto gagal: '+error.message+'. Gunakan Baca Ulang Foto Ini tanpa membuka kamera.',true);
         return;
       }
+      text=nativeText;
     }
     if(id!==requestId)return;
+    if(nativeText&&window.EOMCOVERREADER){
+      const nativeScore=window.EOMCOVERREADER.parse(nativeText).quality;
+      const ocrScore=window.EOMCOVERREADER.parse(ocrResult||text).quality;
+      if(nativeScore>ocrScore+8){text=nativeText;ocrResult=null;}
+    }
     if(!text){
-      setStatus('⚠️ Teks sampul belum dapat dibaca. Pastikan foto terang, tidak miring, dan tulisan terlihat jelas. Coba foto ulang.',true);
+      setStatus('⚠️ Tulisan belum terbaca. Coba Baca Ulang Foto Ini tanpa memotret kembali.',true);
       return;
     }
-    const parsed=extractCoverText(text);
+    const parser=window.EOMCOVERREADER;
+    const parsed=parser?.parse(ocrResult||{text})||extractCoverText(text);
+    const detectedTitle=parsed.title||parsed.candidate||'';
     const found=getIsbnFromText(text)||isbnFromBarcode;
     if(found){isbnInput.value=found;isbnField.value=found;}
-    if(parsed.candidate){
-      // Mengisi kolom SEKARANG, tidak menunggu jaringan metadata.
-      title.value=parsed.candidate;
+    if(detectedTitle){
+      title.value=detectedTitle;
       if(parsed.author)author.value=parsed.author;
       if(parsed.publisher)publisher.value=parsed.publisher;
       if(parsed.publication_year)year.value=String(parsed.publication_year);
-      const suggestion=classifyBook({title:parsed.candidate,author:parsed.author,description:'',detected_text:text});
-      if(!suggestion?.categoryApplied)guessCategory({title:parsed.candidate});
+      const suggestion=classifyBook({title:detectedTitle,author:parsed.author,detected_text:text});
+      if(!suggestion?.categoryApplied)guessCategory({title:detectedTitle});
       showRecognizedText(text,parsed,found,suggestion);
-      setStatus('✅ Teks berhasil dibaca dan kolom terisi otomatis. Periksa hasilnya sebelum Simpan Buku.',false);
+      if(parsed.confidence==='rendah'){
+        setStatus('📝 Judul masih belum pasti. Pilih saran yang paling sesuai dari teks foto atau koreksi kolom Judul.',true);
+      }else if(!parsed.author){
+        setStatus('✅ Judul ditemukan. Nama penulis belum pasti; pilih dari saran penulis jika benar atau isi manual.',false);
+      }else{
+        setStatus('✅ Judul dan penulis berhasil dibaca dari foto. Periksa kesesuaiannya sebelum Simpan Buku.',false);
+      }
     }else{
       result.classList.remove('hidden');
-      result.innerHTML='<details class="smart-ocr-raw" open><summary>Teks foto yang berhasil dibaca</summary><pre>'+esc(text.slice(0,1800))+'</pre></details>';
-      setStatus('📝 Tulisan foto terbaca, tetapi judul belum jelas. Anda dapat menyalin dari hasil pembacaan di bawah.',true);
+      result.innerHTML='<details class="smart-ocr-raw" open><summary>📝 Teks yang terbaca</summary><pre>'+esc(text.slice(0,1800))+'</pre></details>';
+      setStatus('⚠️ Foto terbaca, tetapi judul belum cukup jelas. Gunakan Baca Ulang Foto Ini atau pilih teks sebagai panduan.',true);
     }
     if(id!==requestId)return;
     if(found){
@@ -393,12 +415,12 @@ function init(){
       if(id===requestId)setStatus('✅ Data yang terbaca dari foto sudah masuk kolom. ISBN belum ditemukan dalam katalog daring; periksa lalu Simpan Buku.',false);
       return;
     }
-    if(parsed.candidate.length>=5&&parsed.candidate.split(' ').length>=2){
+    if(detectedTitle.length>=5&&detectedTitle.split(' ').length>=2){
       setStatus('🔍 Mencocokkan judul dengan katalog, data foto sudah dapat diedit…',false);
       try{
-        const meta=await withDeadline(EOMBOOKMETA.searchText(parsed.candidate),17000,'Pencarian judul terlalu lama.');
+        const meta=await withDeadline(EOMBOOKMETA.searchText(detectedTitle),17000,'Pencarian judul terlalu lama.');
         if(id!==requestId)return;
-        if(meta?.title&&similarity(parsed.candidate,meta.title)>=0.75){
+        if(meta?.title&&similarity(detectedTitle,meta.title)>=0.88){
           applyMeta({...meta,author:meta.author||parsed.author,publisher:meta.publisher||parsed.publisher});
           return;
         }
@@ -467,6 +489,19 @@ function init(){
       if(id===requestId){scanning=false;updateControls();}
     }
   }
+  result.addEventListener('click',event=>{
+    const button=event.target?.closest?.('button[data-cover-title],button[data-cover-author]');
+    if(!button)return;
+    event.preventDefault();
+    if(button.hasAttribute('data-cover-title')){
+      const chosen=button.getAttribute('data-cover-title')||'';
+      if(chosen){title.value=chosen;classifyBook({title:chosen});setStatus('✅ Judul diperbaiki dari pilihan foto. Periksa penulis dan data lainnya.',false);}
+    }
+    if(button.hasAttribute('data-cover-author')){
+      const chosen=button.getAttribute('data-cover-author')||'';
+      if(chosen){author.value=chosen;setStatus('✅ Nama penulis dipilih dari hasil foto. Pastikan sesuai sampul sebelum disimpan.',false);}
+    }
+  });
   photo.addEventListener('change',e=>handlePhoto(e.target.files?.[0]));
   gallery.addEventListener('change',e=>handlePhoto(e.target.files?.[0]));
   retry?.addEventListener('click',()=>{if(!scanning&&lastPhotoFile)handlePhoto(lastPhotoFile,true);});
