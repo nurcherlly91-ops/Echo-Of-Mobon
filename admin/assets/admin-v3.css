@@ -45,3 +45,13 @@
 #bookForm .smart-auto-label{display:block;margin-top:9px;padding:8px 11px;border-radius:10px;background:#e7f5e9;border:1px solid #bfdec9;color:#225e3e;line-height:1.45;font-size:.82rem}
 #bookForm #smartBookFormPanel[data-auto-classification]:not([data-auto-classification=""]) .smart-intake-head b::after{content:"  ✓";color:#187744}
 #bookForm select#bookGenre,#bookForm select#bookCategory{min-height:45px}
+
+/* Sekali foto → langsung cover dan pemindaian otomatis, dengan retry dari foto yang sama. */
+#bookForm .smart-photo-preview-row{align-items:flex-start;gap:12px}
+#bookForm .smart-photo-preview-row>div{flex:1;min-width:0}
+#bookForm #bookCoverPreview:not(.hidden){display:block;width:94px;height:132px;max-height:132px;object-fit:contain;background:#fff;border:1px solid #ddd8cf;border-radius:10px;box-shadow:0 2px 9px rgba(35,61,54,.12)}
+#bookForm .smart-retry-photo{display:block;margin-top:10px;width:100%;min-height:43px;padding:9px 10px;font-size:.8rem;white-space:normal;line-height:1.35;text-align:center;border:1px solid #89b8b0;background:#e6f5f1;color:#164d4e;border-radius:9px}
+#bookForm .smart-retry-photo.hidden{display:none!important}
+#bookForm .smart-retry-photo:disabled{opacity:.6;cursor:progress}
+#bookForm .smart-photo-status{line-height:1.55}
+@media(max-width:390px){#bookForm #bookCoverPreview:not(.hidden){width:76px;height:108px}#bookForm .smart-retry-photo{padding:8px 6px;font-size:.75rem}}
