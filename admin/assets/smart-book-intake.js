@@ -47,6 +47,28 @@ function init(){
     const patterns=[[/\b(?:tk|paud)\b/i,'TK / PAUD'],[/\b(?:sd|mi)\b/i,'SD / MI'],[/\b(?:smp|mts)\b/i,'SMP / MTs'],[/\b(?:sma|smk|ma)\b/i,'SMA / MA / SMK']];
     for(const pair of patterns){if(pair[0].test(text)){const match=Array.from(level.options).find(o=>o.value===pair[1]);if(match){level.value=match.value;break;}}}
   }
+  function classifyBook(input){
+    const engine=window.EOMBOOKCLASSIFY;
+    if(!engine?.applyToForm)return null;
+    const result=engine.applyToForm(input);
+    if(result.categoryApplied||result.genreApplied){
+      const label=[result.categoryApplied?'Kategori: '+result.category:'',result.genreApplied?'Genre: '+result.genre:''].filter(Boolean).join(' · ');
+      box.dataset.autoClassification=label;
+    }else{
+      box.dataset.autoClassification='';
+    }
+    return result;
+  }
+  function classificationLabel(value){
+    if(!value||!(value.categoryApplied||value.genreApplied))return '';
+    const labels=[
+      value.categoryApplied?'Kategori: '+value.category:'',
+      value.genreApplied?'Genre: '+value.genre:''
+    ].filter(Boolean);
+    return '<small class="smart-auto-label">🏷️ Saran otomatis ('+
+      esc(value.confidence==='tinggi'?'lebih kuat':'perlu diperiksa')+
+      '): '+esc(labels.join(' · '))+'</small>';
+  }
   function applyMeta(m){
     if(!m)return false;
     if(m.title)title.value=String(m.title).trim();
@@ -60,12 +82,14 @@ function init(){
       const option=Array.from(category.options).find(o=>o.value.toLowerCase()===String(m.category).toLowerCase());
       if(option)category.value=option.value;
     }
-    guessCategory(m);guessLevel(m);
+    const suggestion=classifyBook(m);
+    if(!suggestion?.categoryApplied)guessCategory(m);
+    guessLevel(m);
     result.classList.remove('hidden');
     const img=coverUrl.value?'<img src="'+esc(coverUrl.value)+'" alt="Sampul buku">':'';
     result.innerHTML=img+'<div><b>'+esc(m.title||title.value||'Data buku')+'</b><small>'+
       esc(m.author||'Penulis belum dikenali')+' · '+esc(m.publisher||'Penerbit belum dikenali')+
-      '</small><small>ISBN: '+esc(m.isbn||'-')+' · Sumber: '+esc(m.source||'foto buku')+'</small></div>';
+      '</small><small>ISBN: '+esc(m.isbn||'-')+' · Sumber: '+esc(m.source||'foto buku')+'</small>'+classificationLabel(suggestion)+'</div>';
     setStatus(m.local
       ?'⚠️ ISBN ini sudah tercatat di katalog. Jika hanya menambah eksemplar, sebaiknya ubah stok buku yang sudah ada.'
       :'✅ Data foto berhasil diisikan. Periksa judul, penulis, kategori dan jumlah buku, lalu tekan Simpan Buku.',false);
@@ -78,6 +102,7 @@ function init(){
     publisher.value='';year.value='';isbnField.value='';
     setCover('');
     result.innerHTML='';result.classList.add('hidden');
+    box.dataset.autoClassification='';
     setStatus('📖 Ambil foto sampul atau barcode untuk mengisi data otomatis.',false);
     updateControls();
   }
@@ -117,7 +142,9 @@ function init(){
     const publish=labeled('penerbit|publisher|published\\s+by');
     const yearMatch=text.match(/\b(?:19[5-9]\d|20[0-3]\d)\b/);
     const clean=lines.filter(x=>x.length>=5&&x.length<=95&&!/^(ISBN|PENULIS|PENGARANG|OLEH|AUTHOR|PENERBIT|PUBLISHER|PUBLISHED|EDISI|EDITION|CETAKAN|COPYRIGHT|WWW\.|HTTP)/i.test(x)&&!/^[-\d\s.,]+$/.test(x));
-    const possible=clean.find(x=>x.split(' ').length>=2)||clean[0]||'';
+    let possible=clean.find(x=>x.split(' ').length>=2)||clean[0]||'';
+    const index=clean.indexOf(possible);
+    if(index>=0&&index+1<clean.length&&/\b(dan|yang|di|ke|untuk|the|of|and)\s*$/i.test(possible))possible=(possible+' '+clean[index+1]).slice(0,95);
     return {lines:clean,candidate:possible,author:writer,publisher:publish,publication_year:yearMatch?Number(yearMatch[0]):null};
   }
   function similarity(a,b){
@@ -182,7 +209,7 @@ function init(){
       if(worker)await Promise.race([worker.terminate().catch(()=>{}),new Promise(r=>setTimeout(r,2500))]);
     }
   }
-  function showRecognizedText(text,parsed,found){
+  function showRecognizedText(text,parsed,found,suggestion){
     const current=esc(parsed.candidate||'Belum dikenali');
     result.classList.remove('hidden');
     result.innerHTML='<div style="width:100%"><b>📖 Hasil pembacaan foto</b>'+
@@ -190,6 +217,7 @@ function init(){
       '<small>Penulis: '+esc(parsed.author||'Belum ditemukan')+
       ' · Penerbit: '+esc(parsed.publisher||'Belum ditemukan')+'</small>'+
       (found?'<small>ISBN: '+esc(found)+'</small>':'')+
+      classificationLabel(suggestion)+
       '<details class="smart-ocr-raw"><summary>Lihat teks yang terbaca (untuk koreksi)</summary><pre>'+
       esc(text.slice(0,1800))+'</pre></details></div>';
   }
@@ -239,8 +267,9 @@ function init(){
       if(parsed.author)author.value=parsed.author;
       if(parsed.publisher)publisher.value=parsed.publisher;
       if(parsed.publication_year)year.value=String(parsed.publication_year);
-      guessCategory({title:parsed.candidate});
-      showRecognizedText(text,parsed,found);
+      const suggestion=classifyBook({title:parsed.candidate,author:parsed.author,description:'',detected_text:text});
+      if(!suggestion?.categoryApplied)guessCategory({title:parsed.candidate});
+      showRecognizedText(text,parsed,found,suggestion);
       setStatus('✅ Teks berhasil dibaca dan kolom terisi otomatis. Periksa hasilnya sebelum Simpan Buku.',false);
     }else{
       result.classList.remove('hidden');
