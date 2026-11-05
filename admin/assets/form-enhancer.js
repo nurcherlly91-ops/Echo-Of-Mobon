@@ -25,6 +25,7 @@ function init(){
       const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
       const fill=(el,arr,placeholder)=>{if(!el)return;const current=el.value;el.innerHTML=`<option value="">${placeholder}</option>`+(Array.isArray(arr)?arr:[]).map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');if([...el.options].some(o=>o.value===current))el.value=current};
       fill(bookCategory,cats,'Pilih kategori');fill(digitalCategory,cats,'Pilih kategori');fill(bookGenre.sel,genres,'Pilih genre');fill(digitalGenre.sel,genres,'Pilih genre');
+      document.dispatchEvent(new CustomEvent('eom:book-taxonomy-ready'));
     }catch(e){console.warn('Gagal memuat kategori/genre terbaru',e)}
   }
   document.getElementById('addBookBtn')?.addEventListener('click',()=>setTimeout(refreshTaxonomy,0));
