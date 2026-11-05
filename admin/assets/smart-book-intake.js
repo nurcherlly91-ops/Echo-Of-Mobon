@@ -3,7 +3,7 @@
 function init(){
   if(window.__eomSmartBookIntakeV2)return;
   const form=document.getElementById('bookForm'),dialog=document.getElementById('bookDialog');
-  if(!form||!dialog||!window.SB||!window.EOMBOOKMETA||!window.EOMONLINE)return;
+  if(!form||!dialog||typeof SB==='undefined'||!window.EOMBOOKMETA||typeof EOMONLINE==='undefined')return;
   window.__eomSmartBookIntakeV2=true;
   const byId=id=>document.getElementById(id);
   const title=byId('bookTitle'),author=byId('bookAuthor'),category=byId('bookCategory'),level=byId('bookLevel'),qty=byId('bookQty'),rack=byId('bookRack'),description=byId('bookDescription');
