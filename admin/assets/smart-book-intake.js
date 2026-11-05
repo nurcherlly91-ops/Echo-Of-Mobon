@@ -211,11 +211,16 @@ function init(){
       }catch(error){console.warn('ISBN metadata belum ditemukan',error.message);}
     }
     let text='';
-    try{text=await readText(file,id);}
-    catch(error){
-      if(id!==requestId)return;
-      try{text=await EOMBOOKMETA.detectTextFile(file);}catch(e){}
-      if(!text){
+    if('TextDetector' in window){
+      try{
+        setStatus('🔠 Mencoba pembaca tulisan bawaan HP…',false);
+        text=await withDeadline(EOMBOOKMETA.detectTextFile(file),12000,'Pemindaian lokal terlalu lama.');
+      }catch(e){text='';}
+    }
+    if(!text||text.trim().length<8){
+      try{text=await readText(file,id);}
+      catch(error){
+        if(id!==requestId)return;
         setStatus('⚠️ Mesin pembaca tulisan tidak berhasil: '+error.message+' Coba foto lebih dekat atau pindai barcode ISBN.',true);
         return;
       }
