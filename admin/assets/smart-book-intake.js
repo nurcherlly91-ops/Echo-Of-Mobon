@@ -93,7 +93,7 @@ function init(){
       '</small><small>ISBN: '+esc(m.isbn||'-')+' · Sumber: '+esc(m.source||'foto buku')+'</small>'+classificationLabel(suggestion)+'</div>';
     setStatus(m.local
       ?'⚠️ ISBN ini sudah tercatat di katalog. Jika hanya menambah eksemplar, sebaiknya ubah stok buku yang sudah ada.'
-      :'✅ Data foto berhasil diisikan. Periksa judul, penulis, kategori dan jumlah buku, lalu tekan Simpan Buku.',false);
+      :'✅ Data buku ditemukan dan kolom telah terisi otomatis. Periksa judul, kategori, genre dan jumlah sebelum Simpan Buku.',false);
     return true;
   }
   function reset(){
@@ -105,7 +105,7 @@ function init(){
     setCover('');
     result.innerHTML='';result.classList.add('hidden');
     box.dataset.autoClassification='';
-    setStatus('📖 Ambil foto sampul atau barcode untuk mengisi data otomatis.',false);
+    setStatus('✅ Pembaca buku siap. Ambil foto atau ketik ISBN 10/13 digit; sistem akan mencari data secara otomatis.',false);
     updateControls();
   }
   function updateControls(){
@@ -356,6 +356,7 @@ function init(){
   isbnInput.addEventListener('input',watchIsbn);
   isbnField.addEventListener('input',watchIsbn);
   lookup.addEventListener('click',findIsbn);
+  setStatus('✅ Pembaca buku aktif. Foto sampul atau ketik ISBN lengkap untuk pengisian otomatis.',false);
   addBook?.addEventListener('click',()=>{reset();});
   document.addEventListener('eom:book-taxonomy-ready',()=>{if(lastMetadata)classifyBook(lastMetadata);});
   form.onsubmit=async e=>{
