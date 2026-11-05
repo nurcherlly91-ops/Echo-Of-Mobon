@@ -254,49 +254,66 @@ function init(){
       return canvas.toDataURL('image/png');
     }finally{bitmap.close?.();}
   }
+  function parsedScore(read){
+    const p=window.EOMCOVERREADER?.parse?.(read);
+    if(!p)return String(read?.text||'').trim().length;
+    return p.quality+(p.title?.split(/\s+/).length>=2?7:0)+(p.author?8:0);
+  }
   async function readText(file,id,enhancedFirst=false){
-    setStatus('🔠 Memuat mesin pembaca tulisan. Pemindaian pertama bisa lebih lama karena perlu mengunduh data bahasa…',false);
-    const t=await scriptForOCR();
-    if(id!==requestId)return '';
+    setStatus('🔠 Membaca sampul dalam bahasa Indonesia dan Inggris…',false);
+    const engine=await scriptForOCR();
+    if(id!==requestId)return {text:'',blocks:[]};
     let worker;
+    const logger=message=>{
+      if(id!==requestId)return;
+      if(message.status==='recognizing text'&&Number.isFinite(message.progress)){
+        setStatus('🔠 Memeriksa judul dan penulis: '+Math.round(message.progress*100)+'%…',false);
+      }else if(message.status==='loading language traineddata'){
+        setStatus('🌐 Mengunduh data bahasa OCR sekali saja. Selanjutnya dapat digunakan kembali…',false);
+      }
+    };
     try{
-      worker=await withDeadline(t.createWorker('eng',1,{
-        logger:message=>{
-          if(id!==requestId)return;
-          if(message.status==='recognizing text'&&Number.isFinite(message.progress)){
-            setStatus('🔠 Membaca tulisan di foto: '+Math.round(message.progress*100)+'%…',false);
-          }else if(message.status==='loading language traineddata'){
-            setStatus('🌐 Mengunduh data pembaca tulisan untuk pertama kali…',false);
-          }
-        }
-      }),90000,'Pengunduhan OCR terlalu lama. Periksa jaringan internet.');
-      if(id!==requestId)return '';
-      let inputImage=file;
-      if(enhancedFirst){
-        try{inputImage=await strongerTextImage(file)||file;}
-        catch(e){inputImage=file;}
-      }else{
-        try{inputImage=await EOMONLINE.image(file,1800,.9)||file;}
-        catch(e){inputImage=file;}
+      try{
+        worker=await withDeadline(engine.createWorker(['ind','eng'],1,{logger}),90000,'Data bahasa OCR tidak selesai diunduh.');
+      }catch(error){
+        setStatus('🔠 Memakai pembaca teks cadangan…',false);
+        worker=await withDeadline(engine.createWorker('eng',1,{logger}),90000,'Mesin pembaca teks tidak dapat dimuat.');
       }
-      let recognized=await withDeadline(worker.recognize(inputImage),85000,'Pemindaian foto terlalu lama. Coba tombol Baca Ulang Foto Ini.');
-      let extracted=String(recognized?.data?.text||'').trim();
-      if(extracted.replace(/[^\p{L}\p{N}]/gu,'').length<12){
-        setStatus('🔎 Tulisan masih samar. Memperjelas foto yang sama secara otomatis, tanpa memotret lagi…',false);
+      if(id!==requestId)return {text:'',blocks:[]};
+      async function run(image){
+        const output=await withDeadline(worker.recognize(image,{}, {blocks:true}),85000,'Pembacaan sampul terlalu lama.');
+        return {text:String(output?.data?.text||'').trim(),blocks:Array.isArray(output?.data?.blocks)?output.data.blocks:[]};
+      }
+      let image=file;
+      try{
+        image=enhancedFirst
+          ?await strongerTextImage(file)||file
+          :await EOMONLINE.image(file,1850,.92)||file;
+      }catch(e){image=file;}
+      let best=await run(image);
+      let score=parsedScore(best);
+      if(score<55||(window.EOMCOVERREADER?.parse(best)?.author||'')===''){
+        setStatus('🔎 Memeriksa hasil judul/penulis dengan memperjelas foto yang sama…',false);
         try{
-          const stronger=enhancedFirst
-            ?await EOMONLINE.image(file,1800,.9)
+          const other=enhancedFirst
+            ?await EOMONLINE.image(file,1850,.92)
             :await strongerTextImage(file);
-          if(stronger&&stronger!==inputImage){
-            recognized=await withDeadline(worker.recognize(stronger),85000,'Pemindaian alternatif terlalu lama.');
-            const second=String(recognized?.data?.text||'').trim();
-            if(second.length>extracted.length)extracted=second;
+          if(other&&other!==image){
+            const next=await run(other);
+            if(parsedScore(next)>score+2){
+              best=next;score=parsedScore(next);
+            }
           }
-        }catch(e){console.warn('Pemindaian kedua dari foto yang sama belum tersedia',e.message);}
+        }catch(e){console.warn('Pengecekan OCR alternatif tidak berhasil',e.message);}
       }
-      return extracted;
+      return best;
     }finally{
-      if(worker)await Promise.race([worker.terminate().catch(()=>{}),new Promise(r=>setTimeout(r,2500))]);
+      if(worker){
+        await Promise.race([
+          worker.terminate().catch(()=>{}),
+          new Promise(resolve=>setTimeout(resolve,2500))
+        ]);
+      }
     }
   }
   function showRecognizedText(text,parsed,found,suggestion){
