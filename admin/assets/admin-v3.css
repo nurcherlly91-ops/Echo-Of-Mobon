@@ -67,3 +67,32 @@
 #bookForm .smart-ocr-options button:active{background:#dfeee6}
 #bookForm .smart-book-result .smart-ocr-choice-panel{max-width:100%}
 @media(max-width:540px){#bookForm .smart-ocr-options{padding:8px}#bookForm .smart-ocr-options button{font-size:.85rem}}
+
+/* Koreksi judul & penulis dari foto sampul yang sama */
+#bookForm .eom-precise-button{display:block;margin-top:9px;width:100%;min-height:42px;border-radius:10px;background:#f9f2dd;color:#37505a;border:1px solid #d5bb7e;white-space:normal;padding:8px 10px;font-size:.83rem}
+#bookForm .eom-precise-button[hidden]{display:none!important}
+.eom-crop-dialog{border:0;border-radius:20px;padding:0;width:min(680px,calc(100vw - 18px));max-height:94dvh;background:#fffaf2;color:#1d353b;box-shadow:0 20px 58px #0c252d88}
+.eom-crop-dialog::backdrop{background:rgba(5,25,31,.78)}
+.eom-crop-shell{padding:16px;max-height:92dvh;overflow-y:auto}
+.eom-crop-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.eom-crop-head small{color:#8b6f49;font-size:.7rem;letter-spacing:.09em;font-weight:800}
+.eom-crop-head h2{font-family:Georgia,serif;margin:2px 0;font-size:1.32rem}
+#eomCropClose{border:0;background:#e9e5db;border-radius:40px;font-size:1.5rem;min-width:40px;min-height:40px;cursor:pointer}
+.eom-crop-help{font-size:.88rem;line-height:1.45;color:#555b59;margin:10px 0}
+.eom-crop-modes{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}
+.eom-crop-modes button{background:#ecf2f0;border:1px solid #b4cfc8;border-radius:10px;min-height:44px;padding:10px 8px;font-weight:750;color:#275452;cursor:pointer}
+.eom-crop-modes button.is-active{background:#15676d;color:white;border-color:#15676d}
+.eom-crop-photo-wrap{background:#e7e3d9;border-radius:13px;padding:9px;text-align:center;overflow:hidden}
+.eom-crop-photo-stage{position:relative;display:inline-block;max-width:100%;vertical-align:top;touch-action:none;cursor:crosshair;user-select:none;-webkit-user-select:none}
+#eomCropImage{display:block;width:auto;height:auto;max-width:100%;max-height:53dvh;object-fit:contain;pointer-events:none;-webkit-user-drag:none}
+#eomCropSelection{position:absolute;border:2px solid #03dfff;background:rgba(5,207,232,.16);box-shadow:0 0 0 9999px rgba(0,0,0,.11);pointer-events:none}
+#eomCropSelection[hidden]{display:none}
+.eom-crop-status{border-radius:10px;background:#eaf4ef;color:#18574d;padding:11px;margin:12px 0;line-height:1.45;font-size:.87rem}
+.eom-crop-status.is-error{background:#fff0e9;color:#a34835}
+.eom-crop-result{border:1px solid #d5e4da;border-radius:12px;padding:12px;background:#f8fbf7;word-break:break-word;font-size:.87rem}
+.eom-crop-result[hidden]{display:none}
+.eom-crop-result p{margin:7px 0;font-weight:750}
+.eom-crop-footer{display:flex;flex-wrap:wrap;justify-content:end;gap:8px;margin-top:14px}
+.eom-crop-footer button{border:0;border-radius:10px;min-height:42px;padding:9px 14px;cursor:pointer;background:#19596b;color:white;font-weight:700}
+#eomCropAgain{background:#eee6d5;color:#51492e}
+@media(max-width:440px){.eom-crop-shell{padding:11px}.eom-crop-head h2{font-size:1.1rem}.eom-crop-help{font-size:.81rem}.eom-crop-photo-wrap{padding:5px}}
