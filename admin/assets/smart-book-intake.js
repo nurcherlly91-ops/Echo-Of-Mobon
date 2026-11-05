@@ -11,17 +11,36 @@ function init(){
   const box=byId('smartBookFormPanel');
   if(!box)return;
   const photo=byId('smartBookPhoto'),gallery=byId('smartBookGallery'),isbnInput=byId('smartBookIsbn'),lookup=byId('smartBookLookup'),status=byId('smartBookStatus'),result=byId('smartBookResult');
-  const publisher=byId('bookPublisher'),year=byId('bookYear'),isbnField=byId('bookIsbn'),coverUrl=byId('bookCoverUrl'),coverPreview=byId('bookCoverPreview');
+  const publisher=byId('bookPublisher'),year=byId('bookYear'),isbnField=byId('bookIsbn'),coverUrl=byId('bookCoverUrl'),coverPreview=byId('bookCoverPreview'),retry=byId('smartBookRetry');
   const addBook=byId('addBookBtn');
-  let capturedCover=false,scanning=false,requestId=0,lastMetadata=null,autoIsbnTimer=null,autoIsbnSequence=0;
+  let capturedCover=false,scanning=false,requestId=0,lastMetadata=null,autoIsbnTimer=null,autoIsbnSequence=0,lastPhotoFile=null,provisionalCoverUrl='';
   function setStatus(message,bad){
     status.textContent=message||'';
     status.classList.toggle('smart-photo-error',!!bad);
   }
+  function clearTemporaryPreview(){
+    if(provisionalCoverUrl&&window.URL?.revokeObjectURL){
+      window.URL.revokeObjectURL(provisionalCoverUrl);
+    }
+    provisionalCoverUrl='';
+  }
+  function showImmediatePreview(file){
+    clearTemporaryPreview();
+    if(!file||!window.URL?.createObjectURL)return;
+    provisionalCoverUrl=window.URL.createObjectURL(file);
+    coverPreview.src=provisionalCoverUrl;
+    coverPreview.classList.remove('hidden');
+  }
   function setCover(url){
     coverUrl.value=url||'';
-    if(url){coverPreview.src=url;coverPreview.classList.remove('hidden');}
-    else {coverPreview.removeAttribute('src');coverPreview.classList.add('hidden');}
+    if(url){
+      coverPreview.src=url;
+      coverPreview.classList.remove('hidden');
+    }else{
+      coverPreview.removeAttribute('src');
+      coverPreview.classList.add('hidden');
+    }
+    clearTemporaryPreview();
   }
   function guessCategory(m){
     if(!category||category.value)return;
@@ -99,8 +118,9 @@ function init(){
   function reset(){
     requestId++;
     clearTimeout(autoIsbnTimer);autoIsbnSequence++;
-    capturedCover=false;scanning=false;lastMetadata=null;
+    capturedCover=false;scanning=false;lastMetadata=null;lastPhotoFile=null;
     photo.value='';gallery.value='';isbnInput.value='';
+    if(retry){retry.disabled=true;retry.classList.add('hidden');}
     publisher.value='';year.value='';isbnField.value='';
     setCover('');
     result.innerHTML='';result.classList.add('hidden');
@@ -112,6 +132,7 @@ function init(){
     photo.disabled=scanning;
     gallery.disabled=scanning;
     lookup.disabled=scanning;
+    if(retry)retry.disabled=scanning||!lastPhotoFile;
     box.classList.toggle('smart-photo-loading',scanning);
   }
   async function findIsbn(){
@@ -332,26 +353,70 @@ function init(){
       if(id===requestId)setStatus('✅ Tulisan foto telah dibaca dan dimasukkan. Metadata tambahan tidak ditemukan. Mohon periksa kolom sebelum menyimpan.',false);
     }
   }
-  async function handlePhoto(file){
+  async function handlePhoto(file,fromSavedPhoto=false){
     if(!file)return;
-    if(!String(file.type||'').startsWith('image/')){setStatus('Pilih file gambar JPG, PNG atau WebP.',true);return;}
-    if(file.size>15000000){setStatus('Foto terlalu besar. Gunakan gambar di bawah 15 MB.',true);return;}
+    if(!String(file.type||'').startsWith('image/')){
+      setStatus('Pilih foto buku berformat gambar JPG, PNG, atau WebP.',true);return;
+    }
+    if(file.size>15000000){
+      setStatus('Foto terlalu besar. Pilih foto di bawah 15 MB.',true);return;
+    }
+    const newCapture=!fromSavedPhoto||lastPhotoFile!==file;
     const id=++requestId;
+    clearTimeout(autoIsbnTimer);autoIsbnSequence++;
+    if(newCapture){
+      lastPhotoFile=file;
+      capturedCover=false;
+      coverUrl.value='';
+      showImmediatePreview(file); // Foto langsung tampil tanpa menunggu OCR/katalog.
+      result.innerHTML='';
+      result.classList.add('hidden');
+    }
+    if(retry){retry.classList.remove('hidden');retry.disabled=true;}
     scanning=true;updateControls();
     try{
-      setStatus('📷 Menyiapkan foto sampul untuk disimpan…',false);
-      const small=await EOMONLINE.image(file,950,.76);
+      if(newCapture||!coverUrl.value){
+        setStatus('📸 Satu foto diterima dan cover ditampilkan. Menyiapkan cover untuk katalog…',false);
+        try{
+          const small=await EOMONLINE.image(file,1100,.80);
+          if(id!==requestId)return;
+          if(small&&/^data:image\//.test(small)){
+            setCover(small);
+            capturedCover=true;
+          }
+        }catch(err){
+          // Gagal mengecilkan foto bukan alasan menghentikan pembacaan.
+          if(id!==requestId)return;
+          if(file.size<450000){
+            try{
+              const url=await new Promise((resolve,reject)=>{
+                const reader=new FileReader();
+                reader.onload=()=>resolve(reader.result);
+                reader.onerror=()=>reject(reader.error);
+                reader.readAsDataURL(file);
+              });
+              if(id!==requestId)return;
+              if(typeof url==='string'&&url.startsWith('data:image/')){
+                setCover(url);capturedCover=true;
+              }
+            }catch(e){}
+          }
+        }
+      }
       if(id!==requestId)return;
-      if(small){setCover(small);capturedCover=true;}
+      setStatus(capturedCover
+        ?'✅ Cover sudah tersimpan dari foto yang sama. Sedang membaca judul, ISBN, kategori dan genre…'
+        :'📸 Foto tetap tersedia. Sedang membaca judul dan data buku…',false);
       await recognize(file,id);
     }catch(e){
-      if(id===requestId)setStatus('Foto sudah dipilih, tetapi pembacaan gagal: '+e.message+'. Anda dapat mengisi data manual.',true);
+      if(id===requestId)setStatus('⚠️ Foto tetap tersedia; pembacaan belum berhasil: '+e.message+'. Tekan “Baca Ulang Foto Ini” tanpa memotret lagi.',true);
     }finally{
       if(id===requestId){scanning=false;updateControls();}
     }
   }
   photo.addEventListener('change',e=>handlePhoto(e.target.files?.[0]));
   gallery.addEventListener('change',e=>handlePhoto(e.target.files?.[0]));
+  retry?.addEventListener('click',()=>{if(!scanning&&lastPhotoFile)handlePhoto(lastPhotoFile,true);});
   isbnInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();findIsbn();}});
   isbnInput.addEventListener('input',watchIsbn);
   isbnField.addEventListener('input',watchIsbn);
