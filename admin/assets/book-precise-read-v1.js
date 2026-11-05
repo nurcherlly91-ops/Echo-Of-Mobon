@@ -87,7 +87,7 @@ function cleanupURL(){
  if(objectURL){URL.revokeObjectURL(objectURL);objectURL='';}
 }
 function open(){
- file=$('#smartBookPhoto')?.files?.[0]||$('#smartBookGallery')?.files?.[0]||file;
+ file=file||$('#smartBookPhoto')?.files?.[0]||$('#smartBookGallery')?.files?.[0];
  if(!file){const status=$('#smartBookStatus');if(status)status.textContent='Ambil atau pilih satu foto sampul dahulu.';return;}
  const dialog=ensureDialog();cleanupURL();
  objectURL=URL.createObjectURL(file);
@@ -192,8 +192,8 @@ function init(){
  button.hidden=true;
  button.onclick=open;
  preview.appendChild(button);
- const update=()=>{
-  const chosen=$('#smartBookPhoto')?.files?.[0]||$('#smartBookGallery')?.files?.[0];
+ const update=event=>{
+  const chosen=event?.target?.files?.[0]||$('#smartBookPhoto')?.files?.[0]||$('#smartBookGallery')?.files?.[0];
   if(chosen){file=chosen;button.hidden=false;}
  };
  $('#smartBookPhoto')?.addEventListener('change',update);
