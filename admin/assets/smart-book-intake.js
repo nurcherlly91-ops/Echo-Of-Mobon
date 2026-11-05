@@ -13,7 +13,7 @@ function init(){
   const photo=byId('smartBookPhoto'),gallery=byId('smartBookGallery'),isbnInput=byId('smartBookIsbn'),lookup=byId('smartBookLookup'),status=byId('smartBookStatus'),result=byId('smartBookResult');
   const publisher=byId('bookPublisher'),year=byId('bookYear'),isbnField=byId('bookIsbn'),coverUrl=byId('bookCoverUrl'),coverPreview=byId('bookCoverPreview');
   const addBook=byId('addBookBtn');
-  let capturedCover=false,scanning=false,requestId=0,lastMetadata=null;
+  let capturedCover=false,scanning=false,requestId=0,lastMetadata=null,autoIsbnTimer=null,autoIsbnSequence=0;
   function setStatus(message,bad){
     status.textContent=message||'';
     status.classList.toggle('smart-photo-error',!!bad);
@@ -98,6 +98,7 @@ function init(){
   }
   function reset(){
     requestId++;
+    clearTimeout(autoIsbnTimer);autoIsbnSequence++;
     capturedCover=false;scanning=false;lastMetadata=null;
     photo.value='';gallery.value='';isbnInput.value='';
     publisher.value='';year.value='';isbnField.value='';
@@ -114,14 +115,45 @@ function init(){
     box.classList.toggle('smart-photo-loading',scanning);
   }
   async function findIsbn(){
-    const value=isbnInput.value.trim()||isbnField.value.trim();
+    clearTimeout(autoIsbnTimer);
+    const value=EOMBOOKMETA.normalizeIsbn(isbnInput.value.trim()||isbnField.value.trim());
     if(!value){setStatus('Masukkan ISBN buku lebih dahulu.',true);return;}
-    setStatus('🔎 Sedang mencari judul dan penulis berdasarkan ISBN…',false);
+    if(!/^(?:\\d{10}|\\d{13}|\\d{9}X)$/.test(value)){
+      setStatus('ISBN harus memiliki 10 atau 13 karakter. Periksa angka terakhir.',true);
+      return;
+    }
+    isbnField.value=value;
+    isbnInput.value=value;
+    const serial=++autoIsbnSequence;
+    setStatus('🔎 Membaca ISBN '+value+' dan mencari judul, penulis, kategori, serta genre buku…',false);
     try{
       const m=await EOMBOOKMETA.lookupIsbn(value);
-      if(!m){setStatus('ISBN belum ditemukan di katalog buku daring. Judul dan penulis bisa diisi manual.',true);return;}
+      if(serial!==autoIsbnSequence)return;
+      if(!m?.title){
+        result.classList.remove('hidden');
+        result.innerHTML='<div><b>ISBN '+esc(value)+' belum ada di katalog daring.</b><small>Foto sampul depan untuk mengenali judul dari tulisan, lalu periksa kategorinya.</small></div>';
+        setStatus('⚠️ ISBN '+value+' valid secara format, tetapi data buku tidak ditemukan. Coba Foto Buku untuk membaca sampul.',true);
+        return;
+      }
       applyMeta(m);
-    }catch(e){setStatus('Pencarian ISBN gagal: '+e.message,true);}
+    }catch(e){
+      if(serial!==autoIsbnSequence)return;
+      setStatus('⚠️ Pencarian ISBN terkendala: '+e.message+'. Gunakan foto sampul untuk membaca judul.',true);
+    }
+  }
+  function watchIsbn(e){
+    const source=e.target,value=EOMBOOKMETA.normalizeIsbn(source.value);
+    if(source===isbnInput)isbnField.value=value;
+    if(source===isbnField)isbnInput.value=value;
+    clearTimeout(autoIsbnTimer);
+    autoIsbnSequence++;
+    if(!value){setStatus('📸 Pilih foto atau isi ISBN untuk mengisi data otomatis.',false);return;}
+    if(!/^(?:\\d{10}|\\d{13}|\\d{9}X)$/.test(value)){
+      setStatus('✍️ ISBN sedang diketik ('+value.length+' karakter). Pencarian otomatis berjalan setelah 10 atau 13 karakter.',false);
+      return;
+    }
+    setStatus('🔎 ISBN lengkap. Menyiapkan pencarian otomatis tanpa perlu klik tombol…',false);
+    autoIsbnTimer=setTimeout(()=>{findIsbn();},550);
   }
   function getIsbnFromText(text){
     const candidate=String(text||'').match(/(?:ISBN(?:-1[03])?\s*:?\s*)?(?:97[89][0-9\s-]{10,17}|\b[0-9]{9}[0-9Xx]\b)/gi)||[];
@@ -321,6 +353,8 @@ function init(){
   photo.addEventListener('change',e=>handlePhoto(e.target.files?.[0]));
   gallery.addEventListener('change',e=>handlePhoto(e.target.files?.[0]));
   isbnInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();findIsbn();}});
+  isbnInput.addEventListener('input',watchIsbn);
+  isbnField.addEventListener('input',watchIsbn);
   lookup.addEventListener('click',findIsbn);
   addBook?.addEventListener('click',()=>{reset();});
   document.addEventListener('eom:book-taxonomy-ready',()=>{if(lastMetadata)classifyBook(lastMetadata);});
