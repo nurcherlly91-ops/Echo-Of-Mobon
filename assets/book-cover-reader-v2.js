@@ -95,6 +95,8 @@ function parse(result){
   if(/\b(dan|yang|di|ke|untuk|the|of|and|dari|serta)\s*$/i.test(parts[0])&&parts.length>1)score+=9;
   if(/\b(buku cerita|novel|dongeng|petualangan|hewan laut|cerita anak|ensiklopedia|belajar|matematika|bermain|kisah|sejarah)\b/i.test(candidate))score+=5;
   if(/^[a-z\s]{4,}$/.test(candidate))score-=3;
+  if(/^[A-ZÀ-Ý\s\d]+$/.test(candidate)&&tokens.length>=2&&tokens.length<=10)score+=9;
+  if(/^(?:oma|opa|ibu|bapak|pak|bu)\s+/i.test(candidate))score-=12;
   if(start>Math.max(5,Math.floor(lines.length*.72)))score-=10;
   if(/\b(volume|jilid|kelas|ser i|book)\s*\d+\s*$/i.test(candidate))score+=2;
   if(year.test(candidate)||/\b(?:bab|chapter|edisi|terbit|tahun)\b/i.test(candidate))score-=10;
