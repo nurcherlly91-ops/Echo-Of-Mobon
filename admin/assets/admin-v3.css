@@ -34,3 +34,9 @@
 #bookForm #smartBookFormPanel{padding:12px}
 #bookForm .smart-photo-trigger{min-height:52px}
 }
+
+#bookForm .smart-ocr-raw{margin-top:12px;border-top:1px solid #e2dfd3;padding-top:9px;font-size:.8rem}
+#bookForm .smart-ocr-raw summary{cursor:pointer;font-weight:700;color:#19566b}
+#bookForm .smart-ocr-raw pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:170px;overflow:auto;background:#f5f2e9;border-radius:8px;padding:10px;font-family:inherit;line-height:1.45}
+#bookForm .smart-photo-status{min-height:43px}
+#bookForm .smart-intake-head small{line-height:1.5}
