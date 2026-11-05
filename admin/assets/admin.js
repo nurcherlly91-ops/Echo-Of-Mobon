@@ -2,11 +2,48 @@ document.addEventListener('DOMContentLoaded',()=>{
 const $=id=>document.getElementById(id);let token=null,user=null,data={books:[],digital:[],members:[],visitors:[],requests:[],loans:[],fines:[],settings:[]},digitalCover='';
 EOMONLINE.populate($('bookCategory'),EOMONLINE.categories,'Pilih kategori');EOMONLINE.populate($('bookLevel'),EOMONLINE.levels,'Pilih tingkat');EOMONLINE.populate($('digitalCategory'),EOMONLINE.categories,'Pilih kategori');
 function loginView(on){$('loginCard').classList.toggle('hidden',!on);$('adminApp').classList.toggle('hidden',on);$('logoutBtn').classList.toggle('hidden',on)}
-async function ensureAuth(){const s=await SB.session();if(!s){loginView(true);return}token=s.access_token;user=s.user;try{const info=await SB.rpc('admin_session_info',{},token),p=Array.isArray(info)?info[0]:info;if(!p?.allowed)throw new Error('Akun ini belum memiliki akses Admin.');loginView(false);await refreshAll()}catch(e){await SB.logout();loginView(true);$('loginStatus').textContent=e.message}}
+async function ensureAuth(){
+ try{
+  const s=await SB.session();
+  if(!s?.access_token){loginView(true);$('loginStatus').textContent='Sesi Admin berakhir. Silakan masuk kembali.';return;}
+  token=s.access_token;user=s.user;
+  const info=await SB.rpc('admin_session_info',{},token),p=Array.isArray(info)?info[0]:info;
+  if(!p?.allowed){await SB.logout();throw new Error('Akun ini belum memiliki akses Admin.');}
+  loginView(false);
+  await refreshAll();
+ }catch(e){
+  loginView(true);
+  $('loginStatus').textContent=e.message||'Tidak dapat memverifikasi sesi Admin. Silakan masuk kembali.';
+ }
+}
 $('loginForm').onsubmit=async e=>{e.preventDefault();$('loginStatus').textContent='Memeriksa akses...';try{await SB.login($('adminEmail').value.trim(),$('adminPassword').value);$('adminPassword').value='';await ensureAuth()}catch(err){$('loginStatus').textContent='Login gagal: '+err.message}};
 $('logoutBtn').onclick=async()=>{await SB.logout();location.reload()};$('refreshBtn').onclick=refreshAll;
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.add('hidden'));b.classList.add('active');$('tab-'+b.dataset.tab).classList.remove('hidden')});
-async function refreshAll(){try{const d=await SB.rpc('admin_dashboard_data',{},token)||{};data.books=Array.isArray(d.books)?d.books:[];data.digital=Array.isArray(d.digital)?d.digital:[];data.members=Array.isArray(d.members)?d.members:[];data.visitors=Array.isArray(d.visitors)?d.visitors:[];data.requests=Array.isArray(d.requests)?d.requests:[];data.loans=Array.isArray(d.loans)?d.loans:[];data.fines=Array.isArray(d.fines)?d.fines:[];data.settings=Array.isArray(d.settings)?d.settings:[];render()}catch(e){alert('Data Admin gagal dimuat: '+e.message)}}
+async function refreshAll(){
+ try{
+  const valid=await SB.session();
+  if(!valid?.access_token)throw new Error('Sesi Admin berakhir. Silakan masuk kembali.');
+  token=valid.access_token;
+  const d=await SB.rpc('admin_dashboard_data',{},token)||{};
+  data.books=Array.isArray(d.books)?d.books:[];
+  data.digital=Array.isArray(d.digital)?d.digital:[];
+  data.members=Array.isArray(d.members)?d.members:[];
+  data.visitors=Array.isArray(d.visitors)?d.visitors:[];
+  data.requests=Array.isArray(d.requests)?d.requests:[];
+  data.loans=Array.isArray(d.loans)?d.loans:[];
+  data.fines=Array.isArray(d.fines)?d.fines:[];
+  data.settings=Array.isArray(d.settings)?d.settings:[];
+  render();
+ }catch(e){
+  const message=String(e?.message||e);
+  if(/jwt expired|sesi admin.*berakhir|refresh.token|invalid.jwt|token.*expired/i.test(message)){
+   token=null;loginView(true);
+   $('loginStatus').textContent='Sesi login Admin telah berakhir. Silakan masuk kembali agar data dan fitur dapat digunakan.';
+  }else{
+   alert('Data Admin belum dapat dimuat: '+message+'. Coba tekan Muat Ulang saat jaringan stabil.');
+  }
+ }
+}
 function render(){$('statBooks').textContent=data.books.length;$('statDigital').textContent=data.digital.length;$('statMembers').textContent=data.members.length;$('statVisitors').textContent=data.visitors.length;$('statRequests').textContent=data.requests.filter(x=>x.status==='Menunggu').length;renderBooks();renderDigital();renderMembers();renderVisitors();renderRequests();renderSettings()}
 function renderBooks(){$('booksTable').innerHTML=`<table><tr><th>Kode</th><th>Judul</th><th>Penulis</th><th>Rak</th><th>Stok</th><th>Status</th><th>Aksi</th></tr>${data.books.map(b=>`<tr><td>${EOMONLINE.esc(b.collection_code||'-')}</td><td>${EOMONLINE.esc(b.title)}</td><td>${EOMONLINE.esc(b.author||'-')}</td><td>${EOMONLINE.esc(b.rack_no||'-')}</td><td>${b.qty_available??0}/${b.qty_total??0}</td><td>${EOMONLINE.esc(b.book_status||'-')}</td><td><button class="btn" data-edit-book="${b.id}">Ubah</button></td></tr>`).join('')||'<tr><td colspan="7">Belum ada buku.</td></tr>'}</table>`;document.querySelectorAll('[data-edit-book]').forEach(x=>x.onclick=()=>editBook(x.dataset.editBook))}
 async function editBook(id){const b=data.books.find(x=>x.id===id);if(!b)return;const title=prompt('Judul buku:',b.title||'');if(title===null)return;const author=prompt('Penulis:',b.author||'');if(author===null)return;const category=prompt('Kategori:',b.category||'');if(category===null)return;const level=prompt('Tingkat pembaca:',b.reader_level||'');if(level===null)return;const rack=prompt('Nomor rak:',b.rack_no??1);if(rack===null)return;const total=prompt('Jumlah total:',b.qty_total??1);if(total===null)return;const available=prompt('Jumlah tersedia:',b.qty_available??0);if(available===null)return;const status=prompt('Status buku:',b.book_status||'Tersedia');if(status===null)return;const description=prompt('Deskripsi:',b.description||'');if(description===null)return;try{await SB.rpc('admin_update_book',{p_id:id,p_data:{title,author,category,reader_level:level,rack_no:Number(rack||1),qty_total:Number(total||0),qty_available:Number(available||0),book_status:status,description}},token);await refreshAll();alert('Data buku berhasil disimpan.')}catch(e){alert('Gagal menyimpan: '+e.message)}}
@@ -28,5 +65,20 @@ function renderRequests(){const pending=data.requests.filter(r=>r.status==='Menu
 function setting(key,def=''){const x=data.settings.find(s=>s.key===key);return x?x.value:def}
 function renderSettings(){$('setInstitution').value=setting('institution_name','');$('setAdminPhone').value=setting('admin_phone','');$('setLoanDays').value=setting('default_loan_days',10);$('setDailyFine').value=setting('daily_fine',0);$('setDeliveryFee').value=setting('delivery_fee',0);const cats=setting('book_categories',[]),genres=setting('book_genres',[]);$('setCategories').value=Array.isArray(cats)?cats.join('\n'):String(cats||'');$('setGenres').value=Array.isArray(genres)?genres.join('\n'):String(genres||'')}
 $('settingsForm').onsubmit=async e=>{e.preventDefault();$('settingsStatus').textContent='Menyimpan...';const rows=[['institution_name',$('setInstitution').value.trim(),'Nama pengelola aplikasi'],['admin_phone',$('setAdminPhone').value.trim(),'Nomor Admin / WhatsApp yang tampil di Portal Tamu'],['default_loan_days',Number($('setLoanDays').value||10),'Lama peminjaman standar dalam hari'],['daily_fine',Number($('setDailyFine').value||0),'Denda keterlambatan per hari dalam Rupiah'],['delivery_fee',Number($('setDeliveryFee').value||0),'Biaya pengantaran buku dalam Rupiah'],['book_categories',$('setCategories').value.split('\n').map(x=>x.trim()).filter(Boolean),'Daftar kategori buku yang dapat dikelola Admin'],['book_genres',$('setGenres').value.split('\n').map(x=>x.trim()).filter(Boolean),'Daftar genre buku yang dapat dikelola Admin']];try{for(const [p_key,p_value,p_description] of rows)await SB.rpc('admin_save_setting',{p_key,p_value,p_description},token);$('settingsStatus').textContent='Pengaturan berhasil disimpan.';await refreshAll()}catch(err){$('settingsStatus').textContent='Gagal: '+err.message}}
+window.addEventListener('eom:admin-session-expired',()=>{
+ token=null;loginView(true);
+ $('loginStatus').textContent='Sesi login Admin telah berakhir. Silakan masuk kembali.';
+});
+window.addEventListener('eom:admin-session-refreshed',()=>{
+ const current=SB.getSession();if(current?.access_token)token=current.access_token;
+});
+document.addEventListener('visibilitychange',async()=>{
+ if(document.hidden||$('adminApp').classList.contains('hidden'))return;
+ try{
+  const current=await SB.session();
+  if(current?.access_token)token=current.access_token;
+  else{token=null;loginView(true);$('loginStatus').textContent='Sesi Admin berakhir. Silakan masuk kembali.';}
+ }catch(e){console.warn('Pembaruan sesi saat membuka tab gagal:',e.message);}
+});
 ensureAuth();
 });
