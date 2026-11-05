@@ -106,10 +106,19 @@ function init(){
     return '';
   }
   function extractCoverText(raw){
-    const lines=String(raw||'').split(/\r?\n/).map(s=>s.replace(/[^\p{L}\p{N}\s:.,&'()\-]/gu,' ').replace(/\s+/g,' ').trim()).filter(Boolean);
-    const clean=lines.filter(s=>s.length>=5&&s.length<=95&&!/^(ISBN|PENERBIT|PUBLISHED|EDISI|EDITION|CETAKAN|COPYRIGHT|WWW\.|HTTP)/i.test(s)&&!/^[-\d\s.,]+$/.test(s));
-    const possible=clean.find(s=>s.split(' ').length>=2)||clean[0]||'';
-    return {lines:clean,candidate:possible};
+    const text=String(raw||'');
+    const lines=text.split(/\r?\n/).map(x=>x.replace(/[^\p{L}\p{N}\s:.,&'()\-]/gu,' ').replace(/\s+/g,' ').trim()).filter(Boolean);
+    function labeled(prefix){
+      const pattern=new RegExp('(?:^|\\n)\\s*(?:'+prefix+')\\s*[:\\-]?\\s*([^\\r\\n]{3,85})','im');
+      const match=text.match(pattern);
+      return match?match[1].replace(/^[\s:.\-]+|[\s:.\-]+$/g,'').trim():'';
+    }
+    const writer=labeled('penulis|pengarang|oleh|author|written\\s+by');
+    const publish=labeled('penerbit|publisher|published\\s+by');
+    const yearMatch=text.match(/\b(?:19[5-9]\d|20[0-3]\d)\b/);
+    const clean=lines.filter(x=>x.length>=5&&x.length<=95&&!/^(ISBN|PENULIS|PENGARANG|OLEH|AUTHOR|PENERBIT|PUBLISHER|PUBLISHED|EDISI|EDITION|CETAKAN|COPYRIGHT|WWW\.|HTTP)/i.test(x)&&!/^[-\d\s.,]+$/.test(x));
+    const possible=clean.find(x=>x.split(' ').length>=2)||clean[0]||'';
+    return {lines:clean,candidate:possible,author:writer,publisher:publish,publication_year:yearMatch?Number(yearMatch[0]):null};
   }
   function similarity(a,b){
     const tokens=s=>new Set(String(s||'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').split(' ').filter(x=>x.length>=3));
@@ -178,10 +187,15 @@ function init(){
       }catch(e){}
       if(id!==requestId)return;
       if(!title.value)title.value=parsed.candidate;
+      if(parsed.author&&!author.value)author.value=parsed.author;
+      if(parsed.publisher&&!publisher.value)publisher.value=parsed.publisher;
+      if(parsed.publication_year&&!year.value)year.value=String(parsed.publication_year);
+      guessCategory({title:title.value});
       result.classList.remove('hidden');
-      result.innerHTML='<div><b>📝 Perkiraan judul dari foto</b><small>'+esc(parsed.candidate)+
-        '</small><small>Hasil OCR perlu diperiksa; penulis/penerbit mungkin belum terdeteksi.</small></div>';
-      setStatus('✅ Foto sampul tersimpan, perkiraan judul terisi. Koreksi jika perlu, lalu lengkapi penulis dan simpan.',false);
+      result.innerHTML='<div><b>📝 Data terbaca dari foto</b><small>Judul: '+esc(parsed.candidate)+
+        '</small><small>Penulis: '+esc(parsed.author||'belum terbaca')+
+        ' · Penerbit: '+esc(parsed.publisher||'belum terbaca')+'</small></div>';
+      setStatus('✅ Kolom hasil baca foto sudah terisi sejauh terbaca. Periksa data buku, lalu tekan Simpan Buku.',false);
       return;
     }
     setStatus('📸 Foto sampul telah disiapkan. Teks belum terbaca jelas. Silakan foto ulang lebih dekat atau isi ISBN manual.',true);
