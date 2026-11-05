@@ -9,7 +9,7 @@ const RULES=[
  {category:'Puisi & Drama',genre:'Puisi',pattern:/\b(puisi|poetry|sajak|pantun|syair|soneta)\b/i},
  {category:'Puisi & Drama',genre:'Drama',pattern:/\b(drama|teater|naskah lakon|sandiwara)\b/i},
  {category:'Biografi & Autobiografi',genre:'Biografi',pattern:/\b(biografi|biography|autobiografi|autobiography|riwayat hidup|kisah hidup tokoh)\b/i},
- {category:'Buku Anak-anak',genre:'Anak-anak',pattern:/\b(buku anak|anak-anak|cerita anak|dongeng anak|buku cerita anak|picture book|children's book|juvenile|balita|paud|usia dini|buku bergambar)\b/i},
+ {category:'Buku Anak-anak',genre:'Anak-anak',pattern:/\b(buku anak|anak-anak|cerita anak|dongeng anak|buku cerita anak|picture book|children's book|juvenile|balita|paud|usia dini|buku bergambar|dony)\b/i},
  {category:'Referensi & Ensiklopedia',genre:'Referensi',pattern:/\b(ensiklopedia|encyclopedia|kamus|dictionary|atlas|tesaurus|glosarium|referensi|almanak)\b/i},
  {category:'Buku Ajar & Akademik',genre:'Pendidikan',pattern:/\b(buku pelajaran|buku siswa|buku guru|buku teks|textbook|kurikulum|lembar kerja|lks|latihan soal|ujian sekolah|modul ajar|bahan ajar|matematika (sd|smp|sma|kelas)|kelas (1[0-2]|[1-9])|sekolah dasar|bahasa indonesia (sd|smp|sma))\b/i},
  {category:'Sejarah & Budaya',genre:'Sejarah',pattern:/\b(sejarah|history|historis|kerajaan|perjuangan kemerdekaan|perang dunia|peninggalan sejarah)\b/i},
