@@ -239,7 +239,22 @@ function init(){
     })().catch(e=>{window.__eomTesseractLoading=null;throw e;});
     return window.__eomTesseractLoading;
   }
-  async function readText(file,id){
+  async function strongerTextImage(file){
+    if(typeof createImageBitmap!=='function')return null;
+    const bitmap=await createImageBitmap(file);
+    try{
+      const scale=Math.min(1,1800/Math.max(bitmap.width,bitmap.height));
+      const canvas=document.createElement('canvas');
+      canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+      canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+      const context=canvas.getContext('2d',{willReadFrequently:false});
+      if(!context)return null;
+      context.filter='grayscale(1) contrast(1.65) brightness(1.06)';
+      context.drawImage(bitmap,0,0,canvas.width,canvas.height);
+      return canvas.toDataURL('image/png');
+    }finally{bitmap.close?.();}
+  }
+  async function readText(file,id,enhancedFirst=false){
     setStatus('🔠 Memuat mesin pembaca tulisan. Pemindaian pertama bisa lebih lama karena perlu mengunduh data bahasa…',false);
     const t=await scriptForOCR();
     if(id!==requestId)return '';
@@ -256,9 +271,30 @@ function init(){
         }
       }),90000,'Pengunduhan OCR terlalu lama. Periksa jaringan internet.');
       if(id!==requestId)return '';
-      const inputImage=await EOMONLINE.image(file,1800,.9);
-      const recognized=await withDeadline(worker.recognize(inputImage||file),85000,'Foto sulit dibaca atau pemindaian terlalu lama. Silakan coba foto lain.');
-      return String(recognized?.data?.text||'').trim();
+      let inputImage=file;
+      if(enhancedFirst){
+        try{inputImage=await strongerTextImage(file)||file;}
+        catch(e){inputImage=file;}
+      }else{
+        try{inputImage=await EOMONLINE.image(file,1800,.9)||file;}
+        catch(e){inputImage=file;}
+      }
+      let recognized=await withDeadline(worker.recognize(inputImage),85000,'Pemindaian foto terlalu lama. Coba tombol Baca Ulang Foto Ini.');
+      let extracted=String(recognized?.data?.text||'').trim();
+      if(extracted.replace(/[^\\p{L}\\p{N}]/gu,'').length<12){
+        setStatus('🔎 Tulisan masih samar. Memperjelas foto yang sama secara otomatis, tanpa memotret lagi…',false);
+        try{
+          const stronger=enhancedFirst
+            ?await EOMONLINE.image(file,1800,.9)
+            :await strongerTextImage(file);
+          if(stronger&&stronger!==inputImage){
+            recognized=await withDeadline(worker.recognize(stronger),85000,'Pemindaian alternatif terlalu lama.');
+            const second=String(recognized?.data?.text||'').trim();
+            if(second.length>extracted.length)extracted=second;
+          }
+        }catch(e){console.warn('Pemindaian kedua dari foto yang sama belum tersedia',e.message);}
+      }
+      return extracted;
     }finally{
       if(worker)await Promise.race([worker.terminate().catch(()=>{}),new Promise(r=>setTimeout(r,2500))]);
     }
@@ -275,7 +311,7 @@ function init(){
       '<details class="smart-ocr-raw"><summary>Lihat teks yang terbaca (untuk koreksi)</summary><pre>'+
       esc(text.slice(0,1800))+'</pre></details></div>';
   }
-  async function recognize(file,id){
+  async function recognize(file,id,enhancedFirst=false){
     setStatus('🔎 Memeriksa barcode ISBN pada foto…',false);
     let barcode='';
     try{barcode=await withDeadline(EOMBOOKMETA.detectFile(file),12000,'Pemindaian barcode terlalu lama.');}
@@ -300,7 +336,7 @@ function init(){
       }catch(e){text='';}
     }
     if(!text||text.trim().length<8){
-      try{text=await readText(file,id);}
+      try{text=await readText(file,id,enhancedFirst);}
       catch(error){
         if(id!==requestId)return;
         setStatus('⚠️ Mesin pembaca tulisan tidak berhasil: '+error.message+' Coba foto lebih dekat atau pindai barcode ISBN.',true);
@@ -407,7 +443,7 @@ function init(){
       setStatus(capturedCover
         ?'✅ Cover sudah tersimpan dari foto yang sama. Sedang membaca judul, ISBN, kategori dan genre…'
         :'📸 Foto tetap tersedia. Sedang membaca judul dan data buku…',false);
-      await recognize(file,id);
+      await recognize(file,id,fromSavedPhoto);
     }catch(e){
       if(id===requestId)setStatus('⚠️ Foto tetap tersedia; pembacaan belum berhasil: '+e.message+'. Tekan “Baca Ulang Foto Ini” tanpa memotret lagi.',true);
     }finally{
