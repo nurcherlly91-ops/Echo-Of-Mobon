@@ -13,7 +13,7 @@ function init(){
   const photo=byId('smartBookPhoto'),gallery=byId('smartBookGallery'),isbnInput=byId('smartBookIsbn'),lookup=byId('smartBookLookup'),status=byId('smartBookStatus'),result=byId('smartBookResult');
   const publisher=byId('bookPublisher'),year=byId('bookYear'),isbnField=byId('bookIsbn'),coverUrl=byId('bookCoverUrl'),coverPreview=byId('bookCoverPreview');
   const addBook=byId('addBookBtn');
-  let capturedCover=false,scanning=false,requestId=0;
+  let capturedCover=false,scanning=false,requestId=0,lastMetadata=null;
   function setStatus(message,bad){
     status.textContent=message||'';
     status.classList.toggle('smart-photo-error',!!bad);
@@ -48,6 +48,7 @@ function init(){
     for(const pair of patterns){if(pair[0].test(text)){const match=Array.from(level.options).find(o=>o.value===pair[1]);if(match){level.value=match.value;break;}}}
   }
   function classifyBook(input){
+    lastMetadata=input;
     const engine=window.EOMBOOKCLASSIFY;
     if(!engine?.applyToForm)return null;
     const result=engine.applyToForm(input);
@@ -97,7 +98,7 @@ function init(){
   }
   function reset(){
     requestId++;
-    capturedCover=false;scanning=false;
+    capturedCover=false;scanning=false;lastMetadata=null;
     photo.value='';gallery.value='';isbnInput.value='';
     publisher.value='';year.value='';isbnField.value='';
     setCover('');
@@ -322,6 +323,7 @@ function init(){
   isbnInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();findIsbn();}});
   lookup.addEventListener('click',findIsbn);
   addBook?.addEventListener('click',()=>{reset();});
+  document.addEventListener('eom:book-taxonomy-ready',()=>{if(lastMetadata)classifyBook(lastMetadata);});
   form.onsubmit=async e=>{
     e.preventDefault();
     if(scanning){alert('Pembacaan foto masih berjalan. Silakan periksa hasilnya sebelum menyimpan.');return;}
