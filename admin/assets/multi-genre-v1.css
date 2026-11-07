@@ -1,0 +1,28 @@
+/* Genre 1–5 untuk buku fisik/digital; tetap nyaman di HP */
+.eom-mgenre-legacy{display:none!important}
+.eom-mgenre{display:grid;gap:10px;margin:12px 0 16px;padding:16px;border:1px solid #a7d3ca;border-radius:16px;background:linear-gradient(120deg,#f2fbfa,#fffdf5);box-shadow:0 8px 20px rgba(8,72,77,.05);color:#204851}
+.eom-mgenre-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.eom-mgenre-heading strong{font-size:1.02rem;color:#07576b}
+.eom-mgenre-count{font-size:.84rem;font-weight:800;color:#0c7271;background:#dff4ee;border:1px solid #a6dace;border-radius:18px;padding:5px 11px}
+.eom-mgenre-instruction{font-size:.82rem;line-height:1.5;color:#597477;margin:0}
+.eom-mgenre-selected{display:flex;gap:7px;flex-wrap:wrap;align-items:center;min-height:38px}
+.eom-mgenre-selected em{font-size:.85rem;color:#7c8a8a}
+.eom-mgenre-tag{display:inline-block;background:#0c7378;color:#fff;padding:6px 11px;border-radius:30px;font-size:.79rem;font-weight:760;line-height:1.3}
+.eom-mgenre-search-label{display:block!important;font-size:.84rem;font-weight:700;color:#255c63}
+.eom-mgenre-search{width:100%;margin-top:5px;border:1px solid #a9cdcb;border-radius:11px;padding:12px 13px;min-height:44px;font:inherit;color:#124b57;background:#fff}
+.eom-mgenre-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:270px;overflow:auto;padding:4px;border-radius:12px;overscroll-behavior:contain}
+.eom-mgenre-item{display:flex!important;align-items:center;gap:9px;border:1px solid #d8e9e2;border-radius:10px;background:#fff;padding:10px;min-height:45px;color:#25545a;cursor:pointer;font-size:.85rem;line-height:1.25;overflow-wrap:anywhere;font-weight:650}
+.eom-mgenre-item.selected,.eom-mgenre-item:has(input:checked){background:#e4f8ec;border-color:#75c3a3;color:#145f49}
+.eom-mgenre-item input[type=checkbox]{width:18px!important;height:18px!important;min-width:18px!important;flex:none;margin:0!important;accent-color:#0a8475;cursor:pointer}
+.eom-mgenre-item span{min-width:0}
+.eom-mgenre-status{font-size:.82rem;line-height:1.4;color:#1a6c61;margin:3px 0 0;min-height:23px}
+.eom-mgenre-status.eom-mgenre-error{color:#aa4d30;font-weight:700}
+.eom-mgenre-empty{grid-column:1/-1;padding:12px;color:#6d8082;font-size:.85rem}
+.eom-genre-edit-dialog{width:min(600px,94vw);border:0;border-radius:16px;box-shadow:0 24px 55px #0a233b4f;padding:0;max-height:92dvh}
+.eom-genre-edit-dialog::backdrop{background:rgba(3,26,37,.63)}
+.eom-genre-edit-dialog .modal{overflow-y:auto;max-height:90dvh;padding:24px}
+.eom-mgenre-edit-options{margin:13px 0;display:grid;gap:12px}
+.eom-mgenre-edit-selected{padding:11px;border-radius:10px;background:#e8f6f2;color:#1b625c;font-weight:750;font-size:.9rem}
+#eomEditGenreStatus{color:#a54c34;font-size:.85rem}
+@media(max-width:520px){.eom-mgenre{padding:12px}.eom-mgenre-choices{grid-template-columns:repeat(2,minmax(0,1fr));max-height:245px}.eom-mgenre-item{padding:9px 8px;font-size:.79rem}.eom-genre-edit-dialog .modal{padding:15px}}
+@media(max-width:350px){.eom-mgenre-choices{grid-template-columns:1fr}}
