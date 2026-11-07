@@ -109,7 +109,13 @@ function init(){
      $('eomEditRack').value=book.rack_no||1;
      $('eomEditTotal').value=book.qty_total??1;
      $('eomEditAvailable').value=book.qty_available??1;
-     $('eomEditStatus').value=book.book_status||'Tersedia';
+     const statusField=$('eomEditStatus');
+     const archived=book.active===false;
+     statusField.value=archived?'Nonaktif':(book.book_status||'Tersedia');
+     statusField.disabled=archived;
+     const archiveOption=Array.from(statusField.options).find(x=>x.value==='Nonaktif');
+     if(archiveOption)archiveOption.disabled=!archived;
+     statusField.title=archived?'Buku diarsipkan. Gunakan tombol Pulihkan pada tabel untuk mengaktifkan.':'Gunakan tombol Arsipkan pada tabel untuk menonaktifkan buku.';
      $('eomEditDescription').value=book.description||'';
      $('eomEditCoverFile').value='';$('eomEditRemoveCover').checked=false;
      originalCover=book.cover_url||'';preview(originalCover);
