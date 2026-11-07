@@ -67,18 +67,20 @@ function renderBooks(){
    const isArchived=b.active===false,p=sequence.positions.get(String(b.id));
    return '<tr class="'+(isArchived?'eom-row-archived':'')+'"><td><b class="eom-rack-index">'+EOMONLINE.esc(p?.code||'—')+'</b></td>'+
     '<td>'+EOMONLINE.esc(b.collection_code||'-')+'</td>'+
-    '<td>'+EOMONLINE.esc(b.title)+'</td>'+
+    '<td>'+EOMONLINE.esc(b.title)+(b.genre?'<div class="eom-genre-in-admin">🏷️ '+EOMONLINE.esc(b.genre)+'</div>':'')+'</td>'+
     '<td>'+EOMONLINE.esc(b.author||'-')+'</td>'+
     '<td>'+EOMONLINE.esc(b.rack_no||'-')+'</td>'+
     '<td>'+EOMONLINE.esc((b.qty_available??0)+'/'+(b.qty_total??0))+'</td>'+
     '<td>'+EOMONLINE.esc(isArchived?'Diarsipkan':(b.book_status||'-'))+'</td>'+
     '<td><button class="btn" data-edit-book="'+EOMONLINE.esc(b.id)+'">Ubah</button> '+
+    '<button class="btn ghost mini-btn" data-edit-book-genres="'+EOMONLINE.esc(b.id)+'">Genre 1–5</button> '+
     (isArchived?'<button class="btn ghost mini-btn" data-restore-book="'+EOMONLINE.esc(b.id)+'">Pulihkan</button>':
      '<button class="btn danger mini-btn" data-archive-book="'+EOMONLINE.esc(b.id)+'">Arsipkan</button>')+'</td></tr>';
   }).join('')+
   (rows.length?'':'<tr><td colspan="8">Belum ada buku fisik.</td></tr>')+'</table>'+
   (archived.length?'<p class="muted">'+archived.length+' buku diarsipkan (tidak dihitung dalam nomor urut atau katalog publik).</p>':'');
  document.querySelectorAll('[data-edit-book]').forEach(x=>x.onclick=()=>editBook(x.dataset.editBook));
+ document.querySelectorAll('[data-edit-book-genres]').forEach(x=>x.onclick=()=>window.EOMMULTIGENRE?.editExisting(x.dataset.editBookGenres));
  document.querySelectorAll('[data-archive-book]').forEach(x=>x.onclick=()=>toggleArchiveBook(x.dataset.archiveBook,false));
  document.querySelectorAll('[data-restore-book]').forEach(x=>x.onclick=()=>toggleArchiveBook(x.dataset.restoreBook,true));
 }
