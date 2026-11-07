@@ -1,7 +1,8 @@
 (()=>{
 'use strict';
-/* Saran taksonomi lokal; tidak mengirim foto peserta atau sampul ke layanan AI.
-   Kategori/genre selalu dipilih dari opsi yang sudah tersedia di dashboard. */
+/* Klasifikasi katalog otomatis menggunakan judul, OCR dan metadata ISBN.
+   Berjalan lokal di browser, tanpa mengirim foto ke layanan AI lain.
+   Semua prediksi dapat diperiksa dan dikoreksi admin. */
 const RULES=[
  {category:'Komik & Novel Grafis',genre:'Komik',pattern:/\b(komik|comic|manga|manhwa|graphic novel|ilustrasi komik)\b/i},
  {category:'Fabel & Dongeng',genre:'Fabel',pattern:/\b(fabel|fable|kisah binatang|hewan (yang )?berbicara)\b/i},
@@ -25,49 +26,116 @@ const RULES=[
  {category:'Novel & Cerpen',genre:'Cerpen',pattern:/\b(cerpen|cerita pendek|short stories|short story)\b/i},
  {category:'Novel & Cerpen',genre:'Novel',pattern:/\b(novel|fiction|fiksi|roman|romance|thriller|fantasy|fantasi|misteri|petualangan novel)\b/i}
 ];
+/* Aliases kategori metadata Google Books/Open Library dan jenis bacaan yang umum. */
+const METADATA_RULES=[
+ {category:'Buku Anak-anak',genre:'Anak-anak',pattern:/\b(juvenile|children|kids|early readers|picture books?|young readers|reading age|buku anak)\b/i},
+ {category:'Buku Ajar & Akademik',genre:'Bahasa Inggris',pattern:/\b(english language|learn english|english grammar|bahasa inggris|vocabulary|pronunciation|kosakata inggris)\b/i},
+ {category:'Buku Ajar & Akademik',genre:'Pendidikan',pattern:/\b(education|school|teaching|pedagog|study guides|curriculum|teaching methods|textbooks?|pendidikan|pembelajaran)\b/i},
+ {category:'Sains & Teknologi',genre:'Sains',pattern:/\b(computers?|technology|science|nature|ecology|engineering|medicine|mathematics|environment|informatika|kesehatan)\b/i},
+ {category:'Sejarah & Budaya',genre:'Budaya',pattern:/\b(anthropology|folklore|cultural studies|customs|adat|warisan budaya|tradisi)\b/i},
+ {category:'Sejarah & Budaya',genre:'Sejarah',pattern:/\b(history|historical|sejarah)\b/i},
+ {category:'Filsafat & Agama',genre:'Agama',pattern:/\b(religion|religious|islamic|christianity|theology|spiritual|keagamaan)\b/i},
+ {category:'Novel & Cerpen',genre:'Novel',pattern:/\b(juvenile fiction|fiction|fantasy|romance|literary fiction|novels?|fiksi)\b/i},
+ {category:'Biografi & Autobiografi',genre:'Biografi',pattern:/\b(biography|autobiography|memoir|life stories)\b/i},
+ {category:'Sosial & Politik',genre:'Umum',pattern:/\b(political|social science|public policy|sociology|politics|hukum|law)\b/i},
+ {category:'Panduan Praktis (How-To)',genre:'Pendidikan',pattern:/\b(cooking|crafts|hobbies|handbooks?|guides|how to)\b/i}
+];
+const UNCLASSIFIED='Umum / Belum Terklasifikasi';
 const norm=x=>String(x||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[&.,():/\\\-]+/g,' ').replace(/\s+/g,' ').trim();
+
 function chooseOption(select,wanted){
  if(!select||!wanted)return false;
  const options=Array.from(select.options||[]).filter(x=>x.value);
- if(!options.length)return false;
- const match=options.find(x=>norm(x.value)===norm(wanted))||
+ let match=options.find(x=>norm(x.value)===norm(wanted))||
    options.find(x=>norm(x.textContent)===norm(wanted));
- if(!match)return false;
+ if(!match){
+   match=document.createElement('option');
+   match.value=wanted;
+   match.textContent=wanted;
+   match.dataset.eomAutoOption='true';
+   select.add(match);
+ }
  select.value=match.value;
+ select.dataset.eomAutoValue=match.value;
  select.dispatchEvent(new Event('change',{bubbles:true}));
  return true;
 }
 function recognize(input){
  const data=typeof input==='string'?{title:input}:input||{};
- const title=String(data.title||'').slice(0,230);
- const external=String(data.category||data.genre||'')+' '+(Array.isArray(data.subjects)?data.subjects.join(' '):String(data.subjects||''));
- const detail=String(data.description||'').slice(0,650);
- const seen=String(data.detected_text||data.ocr_text||'').slice(0,700);
+ const title=String(data.title||'').slice(0,230).trim();
+ if(!title)return {category:'',genre:'',confidence:'rendah',score:0,source:'',needsReview:true};
+ const metadata=[data.category,data.genre,Array.isArray(data.subjects)?data.subjects.join(' '):data.subjects].filter(Boolean).join(' ').slice(0,650);
+ const description=String(data.description||'').slice(0,800);
+ const ocr=String(data.detected_text||data.ocr_text||'').slice(0,800);
  const scores=new Map();
- for(const [source,weight] of [[title,7],[external,5],[detail,2],[seen,1]]){
-   for(const rule of RULES){
-     if(!rule.pattern.test(source))continue;
-     const key=rule.category+'|'+rule.genre,prior=scores.get(key)||{score:0,category:rule.category,genre:rule.genre,reasons:[]};
-     prior.score+=weight;prior.reasons.push(weight>=5?'judul/metadata':'teks pendukung');scores.set(key,prior);
+ function add(category,genre,weight,source){
+   const key=category+'|'+genre;
+   const prior=scores.get(key)||{category,genre,score:0,reasons:[],titleMatch:false};
+   prior.score+=weight;
+   prior.reasons.push(source);
+   if(source==='judul')prior.titleMatch=true;
+   scores.set(key,prior);
+ }
+ // Metadata kategori yang sudah dalam taksonomi Echo of Mobon paling dipercaya.
+ const canonical=RULES.filter((rule,i,arr)=>arr.findIndex(x=>x.category===rule.category&&x.genre===rule.genre)===i);
+ const explicitCategory=norm(data.category),explicitGenre=norm(data.genre);
+ if(explicitCategory){
+   const matches=canonical.filter(x=>norm(x.category)===explicitCategory);
+   if(matches.length){
+     const exact=matches.find(x=>norm(x.genre)===explicitGenre);
+     const choice=exact||matches.find(x=>x.genre!=='Umum')||matches[0];
+     add(choice.category,choice.genre,12,'kategori katalog');
    }
  }
- if(!scores.size)return{category:'',genre:'',confidence:'rendah',source:'',score:0};
- const ordered=[...scores.values()].sort((a,b)=>b.score-a.score);
- const best=ordered[0],runner=ordered[1];
- const gap=best.score-(runner?.score||0);
- return {category:best.category,genre:best.genre,score:best.score,source:best.reasons[0]||'',
-   confidence:best.score>=7&&gap>=2?'tinggi':best.score>=5?'sedang':'rendah',candidates:ordered.slice(0,3)};
+ if(explicitGenre&&!explicitCategory){
+   const match=canonical.find(x=>norm(x.genre)===explicitGenre);
+   if(match)add(match.category,match.genre,8,'genre katalog');
+ }
+ // Judul lebih penting daripada tulisan kecil di halaman/cover.
+ for(const [source,weight,label] of [[title,9,'judul'],[metadata,7,'metadata'],[description,3,'deskripsi'],[ocr,2,'foto']]){
+   if(!source)continue;
+   const rules=label==='metadata'?[...RULES,...METADATA_RULES]:RULES;
+   for(const rule of rules){
+     if(rule.pattern.test(source))add(rule.category,rule.genre,weight,label);
+   }
+ }
+ if(!scores.size)return {category:UNCLASSIFIED,genre:'Umum',confidence:'rendah',score:0,source:'judul belum teridentifikasi',needsReview:true,fallback:true};
+ const sorted=[...scores.values()].sort((a,b)=>b.score-a.score||(b.titleMatch?1:0)-(a.titleMatch?1:0));
+ const best=sorted[0],runner=sorted[1],gap=best.score-(runner?.score||0);
+ const confidence=best.score>=9&&gap>=2?'tinggi':best.score>=5?'sedang':'rendah';
+ return {category:best.category,genre:best.genre,score:best.score,source:best.reasons.join(', '),
+   confidence,needsReview:confidence==='rendah',candidates:sorted.slice(0,3)};
 }
 function applyToForm(data,opts={}){
- const candidate=recognize(data);
- const cat=document.getElementById('bookCategory');
- const genre=document.getElementById('bookGenre');
- let categoryApplied=false,genreApplied=false;
- if(candidate.score>=5){
-   categoryApplied=chooseOption(cat,candidate.category);
-   genreApplied=chooseOption(genre,candidate.genre);
- }
- return {...candidate,categoryApplied,genreApplied};
+ const guess=recognize(data);
+ const cat=document.getElementById('bookCategory'),genre=document.getElementById('bookGenre');
+ const canCategory=cat&&!cat.dataset.eomManualOverride;
+ const canGenre=genre&&!genre.dataset.eomManualOverride;
+ const categoryApplied=!!(canCategory&&guess.category&&chooseOption(cat,guess.category));
+ const genreApplied=!!(canGenre&&guess.genre&&chooseOption(genre,guess.genre));
+ document.dispatchEvent(new CustomEvent('eom:book-auto-classified',{detail:{
+   ...guess,categoryApplied,genreApplied,categoryManual:!!cat?.dataset.eomManualOverride,
+   genreManual:!!genre?.dataset.eomManualOverride
+ }}));
+ return {...guess,categoryApplied,genreApplied};
 }
+function enableManualOverrideTracking(){
+ for(const id of ['bookCategory','bookGenre']){
+   const select=document.getElementById(id);
+   if(!select||select.dataset.eomTracking)return;
+   select.dataset.eomTracking='true';
+   select.addEventListener('change',event=>{
+     if(event.isTrusted)select.dataset.eomManualOverride='true';
+   });
+ }
+ document.getElementById('addBookBtn')?.addEventListener('click',()=>{
+   for(const id of ['bookCategory','bookGenre']){
+     const select=document.getElementById(id);
+     if(select){delete select.dataset.eomManualOverride;delete select.dataset.eomAutoValue;}
+   }
+ });
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enableManualOverrideTracking);
+else enableManualOverrideTracking();
 window.EOMBOOKCLASSIFY={recognize,applyToForm,chooseOption};
 })();
