@@ -17,3 +17,6 @@
 .admin-load-health[data-state="ok"]{border-color:#b5d9c1;background:#eaf7f0;color:#206144}
 .admin-load-health[data-state="error"]{border-color:#ebc6ad;background:#fff3e8;color:#863d2c}
 .admin-load-health:empty{display:none}
+
+/* Multiple genres in the public physical-book catalog. */
+.chip.eom-genre-public{border:1px solid #b9d7d0!important;background:#eff9f3!important;color:#1c6656!important;font-weight:700!important}
