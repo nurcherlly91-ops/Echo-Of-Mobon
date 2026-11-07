@@ -111,6 +111,81 @@ function recognize(input){
  return {category:best.category,genre:best.genre,score:best.score,source:best.reasons.join(', '),
    confidence,needsReview:confidence==='rendah',candidates:sorted.slice(0,3)};
 }
+/* Saran beberapa genre (maksimal 5) berdasarkan metadata, judul, sinopsis, dan teks cover.
+   Foto cover tidak dianggap sebagai pembacaan isi lengkap buku. */
+const GENRE_RULES=[
+ {name:'Fiksi',pattern:/\b(fiction|fiksi|cerita rekaan|novel|cerpen|roman)\b/i},
+ {name:'Horor',pattern:/\b(horor|horror|seram|menyeramkan|mencekam|teror|terror|hantu|arwah|angker|rumah berhantu|haunted|ghost|supernatural)\b/i},
+ {name:'Misteri',pattern:/\b(misteri|mystery|mysterious|teka teki|teka-teki|rahasia|penyelidikan|detektif|detective|whodunit)\b/i},
+ {name:'Thriller',pattern:/\b(thriller|suspense|menegangkan|ketegangan|konspirasi|pembunuh berantai|serial killer)\b/i},
+ {name:'Fantasi',pattern:/\b(fantasi|fantasy|sihir|magic|magical|naga|dragon|peri|fairy world|dunia ajaib)\b/i},
+ {name:'Sains Fiksi',pattern:/\b(sci[\s-]?fi|science fiction|fiksi ilmiah|antariksa futuristik|alien|dunia masa depan)\b/i},
+ {name:'Romantis',pattern:/\b(romantis|romance|romantic|percintaan|kisah cinta|cinta sejati|asmara|love story)\b/i},
+ {name:'Petualangan',pattern:/\b(petualangan|adventure|adventures|menjelajah|penjelajahan|ekspedisi|exploration)\b/i},
+ {name:'Kriminal',pattern:/\b(kriminal|crime|criminal|pembunuhan|pencurian|kasus pidana|kejahatan)\b/i},
+ {name:'Komedi',pattern:/\b(komedi|comedy|lucu|humor|jenaka|kocak)\b/i},
+ {name:'Persahabatan',pattern:/\b(persahabatan|sahabat|friendship|best friend)\b/i},
+ {name:'Keluarga',pattern:/\b(keluarga|family|parenting|orang tua dan anak)\b/i},
+ {name:'Psikologi',pattern:/\b(psikologi|psychology|kejiwaan|mental health)\b/i},
+ {name:'Motivasi',pattern:/\b(motivasi|motivation|inspirasi|inspirational|pengembangan diri|self help|self-help)\b/i},
+ {name:'Fiksi Sejarah',pattern:/\b(fiksi sejarah|historical fiction|historical novel|novel sejarah)\b/i},
+ {name:'Nonfiksi',pattern:/\b(nonfiksi|nonfiction|non-fiction|kisah nyata|fakta ilmiah|berdasarkan fakta)\b/i},
+ {name:'Sejarah',pattern:/\b(sejarah|history|historis|kemerdekaan|kerajaan|masa kolonial)\b/i},
+ {name:'Budaya',pattern:/\b(budaya|culture|cultural|adat|tradisi|ritual|tarian|lalayon|kearifan lokal)\b/i},
+ {name:'Kearifan Lokal',pattern:/\b(kearifan lokal|local wisdom|cerita daerah|budaya lokal|halmahera|maba|mobon)\b/i},
+ {name:'Cerita Rakyat',pattern:/\b(cerita rakyat|folktale|folklore|legenda|legend|mitologi)\b/i},
+ {name:'Dongeng',pattern:/\b(dongeng|fairy tale|cerita pengantar tidur|kisah ajaib)\b/i},
+ {name:'Fabel',pattern:/\b(fabel|fable|hewan berbicara|binatang berbicara)\b/i},
+ {name:'Anak-anak',pattern:/\b(buku anak|anak-anak|cerita anak|picture book|juvenile|children|balita|paud|usia dini|dony)\b/i},
+ {name:'Edukasi',pattern:/\b(edukasi|belajar|pelajaran|pembelajaran|pengetahuan|pendidikan|textbook|buku siswa)\b/i},
+ {name:'Pendidikan',pattern:/\b(pendidikan|education|textbook|kurikulum|buku ajar|modul ajar)\b/i},
+ {name:'Sains',pattern:/\b(sains|science|fisika|kimia|biologi|astronomi|hewan laut|marine biology|dinosaurus|planet)\b/i},
+ {name:'Teknologi',pattern:/\b(teknologi|technology|coding|pemrograman|komputer|informatika|robotik|artificial intelligence)\b/i},
+ {name:'Lingkungan',pattern:/\b(lingkungan|environment|ekologi|ecosystem|ekosistem|pencemaran|konservasi)\b/i},
+ {name:'Agama',pattern:/\b(agama|religion|religious|islam|quran|alkitab|hadis|hadits|shalat)\b/i},
+ {name:'Biografi',pattern:/\b(biografi|biography|autobiografi|autobiography|riwayat hidup)\b/i},
+ {name:'Komik',pattern:/\b(komik|comic|manga|manhwa|novel grafis)\b/i},
+ {name:'Puisi',pattern:/\b(puisi|poetry|sajak|pantun|syair)\b/i},
+ {name:'Drama',pattern:/\b(drama|theatre|teater|naskah drama)\b/i},
+ {name:'Cerpen',pattern:/\b(cerpen|short stories|short story|cerita pendek)\b/i},
+ {name:'Novel',pattern:/\b(novel|roman|novels)\b/i},
+ {name:'Referensi',pattern:/\b(ensiklopedia|kamus|dictionary|atlas|referensi)\b/i},
+ {name:'Bahasa Inggris',pattern:/\b(bahasa inggris|english language|learn english|english grammar|english conversation)\b/i},
+ {name:'Bahasa Indonesia',pattern:/\b(bahasa indonesia|indonesian language)\b/i}
+];
+function suggestGenres(input){
+ const data=typeof input==='string'?{title:input}:input||{};
+ const title=String(data.title||'').slice(0,250);
+ const subjects=[data.genre,data.category,Array.isArray(data.subjects)?data.subjects.join(' '):data.subjects].filter(Boolean).join(' ').slice(0,1200);
+ const description=String(data.description||data.summary||'').slice(0,3500);
+ const ocr=String(data.detected_text||data.ocr_text||'').slice(0,1000);
+ if(!title&&!subjects&&!description&&!ocr)return [];
+ const scores=new Map(),ranks=new Map(GENRE_RULES.map((x,i)=>[x.name,i]));
+ function add(name,weight,reason){
+  const old=scores.get(name)||{name,score:0,reasons:[]};
+  old.score+=weight;
+  old.reasons.push(reason);
+  scores.set(name,old);
+ }
+ for(const [source,weight,reason] of [[title,9,'judul'],[subjects,8,'metadata'],[description,5,'sinopsis'],[ocr,1,'foto']]){
+  if(!source)continue;
+  for(const rule of GENRE_RULES){
+   if(rule.pattern.test(source))add(rule.name,weight,reason);
+  }
+ }
+ const category=norm(data.category);
+ const generic=norm(data.genre);
+ if(category==='novel cerpen' || category==='komik novel grafis'){
+   add('Fiksi',5,'kategori');
+ }
+ if(category==='buku anak anak')add('Anak-anak',7,'kategori');
+ if(category==='sains teknologi')add('Sains',5,'kategori');
+ if(category==='sejarah budaya')add('Budaya',4,'kategori');
+ if(generic==='umum'&&scores.size===0)add('Umum',3,'genre umum');
+ // Saran selalu dibatasi lima. Hasil dengan bukti lebih kuat diutamakan.
+ const sorted=[...scores.values()].sort((a,b)=>b.score-a.score||(ranks.get(a.name)||0)-(ranks.get(b.name)||0));
+ return sorted.filter(x=>x.score>=3).slice(0,5).map(x=>x.name);
+}
 function applyToForm(data,opts={}){
  const guess=recognize(data);
  const cat=document.getElementById('bookCategory'),genre=document.getElementById('bookGenre');
@@ -119,7 +194,7 @@ function applyToForm(data,opts={}){
  const categoryApplied=!!(canCategory&&guess.category&&chooseOption(cat,guess.category));
  const genreApplied=!!(canGenre&&guess.genre&&chooseOption(genre,guess.genre));
  document.dispatchEvent(new CustomEvent('eom:book-auto-classified',{detail:{
-   ...guess,categoryApplied,genreApplied,categoryManual:!!cat?.dataset.eomManualOverride,
+   ...guess,genresSuggested:suggestGenres(data),inputData:data,categoryApplied,genreApplied,categoryManual:!!cat?.dataset.eomManualOverride,
    genreManual:!!genre?.dataset.eomManualOverride
  }}));
  return {...guess,categoryApplied,genreApplied};
@@ -142,5 +217,5 @@ function enableManualOverrideTracking(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enableManualOverrideTracking);
 else enableManualOverrideTracking();
-window.EOMBOOKCLASSIFY={recognize,applyToForm,chooseOption};
+window.EOMBOOKCLASSIFY={recognize,suggestGenres,applyToForm,chooseOption};
 })();
