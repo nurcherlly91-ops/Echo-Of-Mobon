@@ -1,5 +1,13 @@
 document.addEventListener('DOMContentLoaded',()=>{
 const $=id=>document.getElementById(id);let token=null,user=null,data={books:[],digital:[],members:[],visitors:[],requests:[],loans:[],fines:[],settings:[]},digitalCover='';
+const loadHealth=document.createElement('div');
+loadHealth.id='adminLoadHealth';loadHealth.className='admin-load-health';
+loadHealth.setAttribute('role','status');loadHealth.setAttribute('aria-live','polite');
+document.querySelector('#adminApp .admin-head')?.after(loadHealth);
+function showHealth(message,type='loading'){
+ if(!loadHealth)return;
+ loadHealth.textContent=message;loadHealth.dataset.state=type;
+}
 EOMONLINE.populate($('bookCategory'),EOMONLINE.categories,'Pilih kategori');EOMONLINE.populate($('bookLevel'),EOMONLINE.levels,'Pilih tingkat');EOMONLINE.populate($('digitalCategory'),EOMONLINE.categories,'Pilih kategori');
 function loginView(on){$('loginCard').classList.toggle('hidden',!on);$('adminApp').classList.toggle('hidden',on);$('logoutBtn').classList.toggle('hidden',on)}
 async function ensureAuth(){
@@ -20,6 +28,7 @@ $('loginForm').onsubmit=async e=>{e.preventDefault();$('loginStatus').textConten
 $('logoutBtn').onclick=async()=>{await SB.logout();location.reload()};$('refreshBtn').onclick=refreshAll;
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.add('hidden'));b.classList.add('active');$('tab-'+b.dataset.tab).classList.remove('hidden')});
 async function refreshAll(){
+ showHealth('⏳ Memuat koleksi dan data perpustakaan…','loading');
  try{
   const valid=await SB.session();
   if(!valid?.access_token)throw new Error('Sesi Admin berakhir. Silakan masuk kembali.');
@@ -34,8 +43,10 @@ async function refreshAll(){
   data.fines=Array.isArray(d.fines)?d.fines:[];
   data.settings=Array.isArray(d.settings)?d.settings:[];
   render();
+  showHealth('✅ Data berhasil dimuat: '+data.books.filter(b=>b.active!==false).length+' buku fisik, '+data.digital.length+' buku digital, '+data.members.length+' anggota, '+data.visitors.length+' kunjungan.','ok');
  }catch(e){
   const message=String(e?.message||e);
+  showHealth('⚠️ Data belum berhasil dimuat. Tekan Muat Ulang. Jika tetap gagal, keluar dan login kembali. Detail: '+message.slice(0,160),'error');
   if(/jwt expired|sesi admin.*berakhir|refresh.token|invalid.jwt|token.*expired/i.test(message)){
    token=null;loginView(true);
    $('loginStatus').textContent='Sesi login Admin telah berakhir. Silakan masuk kembali agar data dan fitur dapat digunakan.';
