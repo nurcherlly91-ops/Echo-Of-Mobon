@@ -12,6 +12,7 @@ const RULES=[
  {category:'Biografi & Autobiografi',genre:'Biografi',pattern:/\b(biografi|biography|autobiografi|autobiography|riwayat hidup|kisah hidup tokoh)\b/i},
  {category:'Buku Anak-anak',genre:'Anak-anak',pattern:/\b(buku anak|anak-anak|cerita anak|dongeng anak|buku cerita anak|picture book|children's book|juvenile|balita|paud|usia dini|buku bergambar|dony)\b/i},
  {category:'Referensi & Ensiklopedia',genre:'Referensi',pattern:/\b(ensiklopedia|encyclopedia|kamus|dictionary|atlas|tesaurus|glosarium|referensi|almanak)\b/i},
+ {category:'Buku Ajar & Akademik',genre:'Bahasa Inggris',pattern:/\b(bahasa inggris|belajar english|english (?:grammar|language|learning|for|vocabulary|conversation|lesson|book)|vocabulary|grammar|speaking english|english speaking|english course)\b/i},
  {category:'Buku Ajar & Akademik',genre:'Pendidikan',pattern:/\b(buku pelajaran|buku siswa|buku guru|buku teks|textbook|kurikulum|lembar kerja|lks|latihan soal|ujian sekolah|modul ajar|bahan ajar|matematika (sd|smp|sma|kelas)|kelas (1[0-2]|[1-9])|sekolah dasar|bahasa indonesia (sd|smp|sma))\b/i},
  {category:'Sejarah & Budaya',genre:'Sejarah',pattern:/\b(sejarah|history|historis|kerajaan|perjuangan kemerdekaan|perang dunia|peninggalan sejarah)\b/i},
  {category:'Sejarah & Budaya',genre:'Budaya',pattern:/\b(budaya|cultural|culture|adat istiadat|tradisi|tarian tradisional|warisan budaya|kearifan lokal|halmahera|maba|lalayon|nusantara)\b/i},
@@ -90,6 +91,10 @@ function recognize(input){
  if(explicitGenre&&!explicitCategory){
    const match=canonical.find(x=>norm(x.genre)===explicitGenre);
    if(match)add(match.category,match.genre,8,'genre katalog');
+ }
+ // 'Juvenile Fiction' berarti buku anak, bukan novel dewasa.
+ if(/\b(juvenile|children|kids|young readers|picture books?)\b/i.test(metadata)){
+   add('Buku Anak-anak','Anak-anak',12,'metadata usia pembaca');
  }
  // Judul lebih penting daripada tulisan kecil di halaman/cover.
  for(const [source,weight,label] of [[title,9,'judul'],[metadata,7,'metadata'],[description,3,'deskripsi'],[ocr,2,'foto']]){
