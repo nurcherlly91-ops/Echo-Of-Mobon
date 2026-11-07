@@ -93,7 +93,7 @@ function init(){
  function classifyDigital(){
    const title=digitalTitle?.value.trim();
    if(!title){renderDigital(null);return;}
-   const result=engine.recognize({title});
+   const result=engine.recognize({title,description:document.getElementById('digitalSummary')?.value||''});
    if(result.category&&!digitalCategory?.dataset.eomManualOverride)engine.chooseOption(digitalCategory,result.category);
    if(result.genre&&!digitalGenre?.dataset.eomManualOverride)engine.chooseOption(digitalGenre,result.genre);
    renderDigital(result);
@@ -105,6 +105,10 @@ function init(){
    });
  });
  digitalTitle?.addEventListener('input',()=>{
+   clearTimeout(digitalTimer);
+   digitalTimer=setTimeout(classifyDigital,500);
+ });
+ document.getElementById('digitalSummary')?.addEventListener('input',()=>{
    clearTimeout(digitalTimer);
    digitalTimer=setTimeout(classifyDigital,500);
  });
