@@ -1,0 +1,25 @@
+/* Pendeteksi foto sampul dan data koleksi yang pernah ditambahkan. */
+.eom-duplicate-panel{display:flex;gap:13px;align-items:flex-start;margin:12px 0 18px;padding:15px;border-radius:16px;border:2px solid #e1bc68;background:#fff8e4;color:#644412;box-shadow:0 7px 21px rgba(70,52,12,.08);font-size:.9rem;line-height:1.55}
+.eom-duplicate-panel.hidden{display:none!important}
+.eom-duplicate-panel.is-duplicate{border-color:#c55b50;background:linear-gradient(125deg,#fff0ed,#fffcf6);color:#802c24}
+.eom-duplicate-panel.is-possible{border-color:#d2a348;background:linear-gradient(125deg,#fff6dd,#fffefa);color:#68491b}
+.eom-duplicate-panel.is-checking{border-color:#9dc9d4;background:#edf9fb;color:#155467;display:block}
+.eom-duplicate-panel.is-error{border-color:#dca27b;background:#fff5e8;color:#8b4b2d;display:block}
+.eom-duplicate-panel.is-clear{border:1px solid #cde9d3;background:#f0f9f1;color:#255c44;display:block;padding:10px 13px}
+.eom-duplicate-panel.is-checking p,.eom-duplicate-panel.is-clear p,.eom-duplicate-panel.is-error p{margin:5px 0 0}
+.eom-duplicate-icon{font-size:28px;line-height:1.4;flex:none}
+.eom-duplicate-content{flex:1;min-width:0}
+.eom-duplicate-content>strong{display:block;font-size:1.04rem;letter-spacing:.015em;margin-bottom:6px}
+.eom-duplicate-content>p{margin:0 0 11px}
+.eom-existing-book{display:grid;gap:4px;padding:11px 13px;border-radius:12px;background:#fff;border:1px solid #e9d9b7;color:#25414d;overflow-wrap:anywhere}
+.eom-existing-book b{font-size:.94rem}
+.eom-existing-book small{font-size:.82rem;color:#53626b}
+.eom-duplicate-actions{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0}
+.eom-duplicate-actions .btn{min-height:43px;cursor:pointer}
+.eom-duplicate-confirm{display:flex!important;gap:10px!important;align-items:flex-start!important;margin:8px 0 10px;padding:11px;border:1px solid #dec795;border-radius:10px;background:#fffdf8;cursor:pointer;font-weight:600}
+.eom-duplicate-confirm input[type=checkbox]{width:19px!important;height:19px!important;flex:none;margin:2px 0 0;accent-color:#0a7a80}
+.eom-duplicate-content>small{display:block;color:#746145;font-size:.79rem}
+#booksTable tr.eom-duplicate-highlight{outline:3px solid #c99527;outline-offset:-3px;box-shadow:0 0 0 4px rgba(223,177,72,.19)}
+.eom-duplicate-attention{animation:eom-duplicate-flash .6s ease-in-out 2}
+@keyframes eom-duplicate-flash{50%{box-shadow:0 0 0 6px rgba(204,76,63,.29)}}
+@media(max-width:560px){.eom-duplicate-panel{padding:12px;gap:8px}.eom-duplicate-icon{font-size:21px}.eom-duplicate-actions{display:grid;grid-template-columns:1fr}.eom-duplicate-actions .btn{width:100%}}
