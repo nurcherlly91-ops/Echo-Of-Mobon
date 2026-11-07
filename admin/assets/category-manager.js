@@ -1,18 +1,23 @@
 document.addEventListener('DOMContentLoaded',()=>{
-  const tabs=document.querySelector('.admin-tabs');
   const adminApp=document.getElementById('adminApp');
-  if(!tabs||!adminApp)return;
+  const settingsPanel=document.getElementById('tab-settings');
+  const settingsForm=document.getElementById('settingsForm');
+  const settingsTab=document.querySelector('.admin-tabs .tab[data-tab="settings"]');
+  if(!adminApp||!settingsPanel||!settingsForm||!settingsTab)return;
 
-  const tab=document.createElement('button');
-  tab.className='tab';
-  tab.type='button';
-  tab.dataset.tab='taxonomy';
-  tab.innerHTML='Kategori & Genre';
-  tabs.appendChild(tab);
+  // Kategori adalah bagian dari Pengaturan, bukan menu utama terpisah.
+  const subnav=document.createElement('nav');
+  subnav.className='settings-subnav';
+  subnav.setAttribute('aria-label','Kategori pengaturan Echo of Mobon');
+  subnav.innerHTML='<button type="button" id="settingsGeneralTab" class="settings-subtab active">⚙️ Pengaturan Umum</button>'+
+    '<button type="button" id="settingsTaxonomyTab" class="settings-subtab">📚 Kategori & Genre Buku</button>';
+  settingsPanel.querySelector('.panel-head')?.after(subnav);
+  const generalTab=subnav.querySelector('#settingsGeneralTab');
+  const categoryTab=subnav.querySelector('#settingsTaxonomyTab');
 
   const panel=document.createElement('section');
-  panel.id='tab-taxonomy';
-  panel.className='tab-panel hidden taxonomy-panel';
+  panel.id='settingsTaxonomy';
+  panel.className='taxonomy-panel hidden';
   panel.innerHTML=`
     <div class="panel-head taxonomy-heading">
       <div>
@@ -39,20 +44,44 @@ document.addEventListener('DOMContentLoaded',()=>{
       </article>
     </div>
     <div id="taxonomyStatus" class="taxonomy-status"></div>`;
-  document.getElementById('tab-settings')?.after(panel);
+  settingsForm.after(panel);
+  // Edit massal tetap tersedia sebagai pengaturan lanjutan.
+  const bulk=document.getElementById('setCategories')?.closest('.grid2');
+  if(bulk){
+    const details=document.createElement('details');
+    details.className='settings-bulk-edit';
+    details.innerHTML='<summary>Pengaturan lanjutan · Edit daftar kategori/genre sekaligus</summary>';
+    bulk.before(details);
+    details.appendChild(bulk);
+  }
 
   let categories=[],genres=[];
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const uniq=list=>[...new Map(list.map(x=>[String(x).trim().toLocaleLowerCase('id'),String(x).trim()])).values()].filter(Boolean);
 
   function showPanel(){
-    document.querySelectorAll('.admin-tabs .tab').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(x=>x.classList.add('hidden'));
-    tab.classList.add('active');
+    settingsForm.classList.add('hidden');
     panel.classList.remove('hidden');
+    generalTab.classList.remove('active');
+    categoryTab.classList.add('active');
     load();
   }
-  tab.addEventListener('click',showPanel);
+  function showGeneral(){
+    settingsForm.classList.remove('hidden');
+    panel.classList.add('hidden');
+    generalTab.classList.add('active');
+    categoryTab.classList.remove('active');
+  }
+  categoryTab.addEventListener('click',showPanel);
+  generalTab.addEventListener('click',showGeneral);
+  settingsTab.addEventListener('click',showGeneral);
+  const booksHead=document.querySelector('#tab-books .panel-head');
+  if(booksHead){
+    const manage=document.createElement('button');
+    manage.type='button';manage.className='btn ghost';manage.textContent='⚙️ Atur Kategori Buku';
+    manage.addEventListener('click',()=>{settingsTab.click();showPanel();});
+    booksHead.appendChild(manage);
+  }
 
   async function token(){const s=await SB.session();if(!s?.access_token)throw new Error('Sesi Admin berakhir. Silakan login kembali.');return s.access_token}
   function setting(rows,key,def=[]){const x=(rows||[]).find(r=>r.key===key);return x?x.value:def}
@@ -68,9 +97,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   function render(){
     document.getElementById('categoryCount').textContent=categories.length;
     document.getElementById('genreCount').textContent=genres.length;
-    document.getElementById('categoryList').innerHTML=categories.map((v,i)=>`<div class="taxonomy-item"><span><i>${String(i+1).padStart(2,'0')}</i>${esc(v)}</span><button type="button" class="taxonomy-remove" data-remove-category="${esc(v)}" title="Hapus dari daftar">×</button></div>`).join('')||'<div class="taxonomy-empty">Belum ada kategori.</div>';
-    document.getElementById('genreList').innerHTML=genres.map((v,i)=>`<div class="taxonomy-item"><span><i>${String(i+1).padStart(2,'0')}</i>${esc(v)}</span><button type="button" class="taxonomy-remove" data-remove-genre="${esc(v)}" title="Hapus dari daftar">×</button></div>`).join('')||'<div class="taxonomy-empty">Belum ada genre.</div>';
+    document.getElementById('categoryList').innerHTML=categories.map((v,i)=>`<div class="taxonomy-item"><span><i>${String(i+1).padStart(2,'0')}</i>${esc(v)}</span><button type="button" class="taxonomy-edit" data-rename-category="${esc(v)}" title="Ubah nama kategori">Ubah</button><button type="button" class="taxonomy-remove" data-remove-category="${esc(v)}" title="Hapus dari daftar">×</button></div>`).join('')||'<div class="taxonomy-empty">Belum ada kategori.</div>';
+    document.getElementById('genreList').innerHTML=genres.map((v,i)=>`<div class="taxonomy-item"><span><i>${String(i+1).padStart(2,'0')}</i>${esc(v)}</span><button type="button" class="taxonomy-edit" data-rename-genre="${esc(v)}" title="Ubah nama genre">Ubah</button><button type="button" class="taxonomy-remove" data-remove-genre="${esc(v)}" title="Hapus dari daftar">×</button></div>`).join('')||'<div class="taxonomy-empty">Belum ada genre.</div>';
     syncSelect('bookCategory',categories);syncSelect('digitalCategory',categories);
+    syncSelect('bookGenre',genres);syncSelect('digitalGenre',genres);
+    document.dispatchEvent(new CustomEvent('eom:book-taxonomy-ready'));
     const sc=document.getElementById('setCategories'),sg=document.getElementById('setGenres');
     if(sc)sc.value=categories.join('\n');if(sg)sg.value=genres.join('\n');
   }
@@ -89,21 +120,47 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('categoryAddForm').addEventListener('submit',async e=>{
     e.preventDefault();const input=document.getElementById('categoryNew'),v=input.value.trim();if(!v)return;
     if(categories.some(x=>x.toLocaleLowerCase('id')===v.toLocaleLowerCase('id'))){document.getElementById('taxonomyStatus').textContent='Kategori tersebut sudah ada.';return}
-    categories=uniq([...categories,v]);
-    try{await save('book_categories',categories,'Daftar kategori buku yang dapat dikelola Admin');input.value='';render();document.getElementById('taxonomyStatus').textContent='Kategori baru berhasil ditambahkan.'}catch(err){document.getElementById('taxonomyStatus').textContent='Gagal menambah kategori: '+err.message}
+    const updated=uniq([...categories,v]);
+    try{await save('book_categories',updated,'Daftar kategori buku yang dapat dikelola Admin');categories=updated;input.value='';render();document.getElementById('taxonomyStatus').textContent='Kategori baru berhasil ditambahkan.'}catch(err){document.getElementById('taxonomyStatus').textContent='Gagal menambah kategori: '+err.message}
   });
 
   document.getElementById('genreAddForm').addEventListener('submit',async e=>{
     e.preventDefault();const input=document.getElementById('genreNew'),v=input.value.trim();if(!v)return;
     if(genres.some(x=>x.toLocaleLowerCase('id')===v.toLocaleLowerCase('id'))){document.getElementById('taxonomyStatus').textContent='Genre tersebut sudah ada.';return}
-    genres=uniq([...genres,v]);
-    try{await save('book_genres',genres,'Daftar genre buku yang dapat dikelola Admin');input.value='';render();document.getElementById('taxonomyStatus').textContent='Genre baru berhasil ditambahkan.'}catch(err){document.getElementById('taxonomyStatus').textContent='Gagal menambah genre: '+err.message}
+    const updated=uniq([...genres,v]);
+    try{await save('book_genres',updated,'Daftar genre buku yang dapat dikelola Admin');genres=updated;input.value='';render();document.getElementById('taxonomyStatus').textContent='Genre baru berhasil ditambahkan.'}catch(err){document.getElementById('taxonomyStatus').textContent='Gagal menambah genre: '+err.message}
   });
 
   panel.addEventListener('click',async e=>{
+    const rc=e.target.closest('[data-rename-category]'),rg=e.target.closest('[data-rename-genre]');
     const c=e.target.closest('[data-remove-category]'),g=e.target.closest('[data-remove-genre]');
-    if(c){const v=c.dataset.removeCategory;if(!confirm(`Hapus kategori “${v}” dari daftar pilihan?\n\nBuku lama yang sudah memakai kategori ini tidak akan ikut terhapus.`))return;categories=categories.filter(x=>x!==v);try{await save('book_categories',categories,'Daftar kategori buku yang dapat dikelola Admin');render();document.getElementById('taxonomyStatus').textContent='Kategori dihapus dari daftar pilihan.'}catch(err){document.getElementById('taxonomyStatus').textContent='Gagal menghapus kategori: '+err.message}}
-    if(g){const v=g.dataset.removeGenre;if(!confirm(`Hapus genre “${v}” dari daftar pilihan?\n\nData buku lama tidak akan ikut terhapus.`))return;genres=genres.filter(x=>x!==v);try{await save('book_genres',genres,'Daftar genre buku yang dapat dikelola Admin');render();document.getElementById('taxonomyStatus').textContent='Genre dihapus dari daftar pilihan.'}catch(err){document.getElementById('taxonomyStatus').textContent='Gagal menghapus genre: '+err.message}}
+    const status=document.getElementById('taxonomyStatus');
+    if(rc||rg){
+      const isCategory=!!rc,old=(rc||rg).dataset[isCategory?'renameCategory':'renameGenre'];
+      const collection=isCategory?categories:genres;
+      const next=prompt('Ubah nama '+(isCategory?'kategori':'genre')+':',old);
+      if(next===null)return;
+      const value=next.trim();
+      if(!value||value.length>90){status.textContent='Nama harus 1–90 karakter.';return;}
+      if(collection.some(x=>x!==old&&x.toLocaleLowerCase('id')===value.toLocaleLowerCase('id'))){status.textContent='Nama sudah digunakan.';return;}
+      const updated=collection.map(x=>x===old?value:x);
+      try{
+        await save(isCategory?'book_categories':'book_genres',updated,'Daftar kategori/genre buku yang dapat dikelola Admin');
+        if(isCategory)categories=updated;else genres=updated;
+        render();status.textContent='Nama berhasil diubah. Buku yang sudah menggunakan nama lama tetap memiliki kategorinya sampai diedit.';
+      }catch(err){status.textContent='Gagal mengubah nama: '+err.message;}
+      return;
+    }
+    if(c||g){
+      const isCategory=!!c,old=(c||g).dataset[isCategory?'removeCategory':'removeGenre'];
+      if(!confirm('Hapus '+(isCategory?'kategori':'genre')+' “'+old+'” dari pilihan?\n\nData buku lama tidak ikut dihapus.'))return;
+      const updated=(isCategory?categories:genres).filter(x=>x!==old);
+      try{
+        await save(isCategory?'book_categories':'book_genres',updated,'Daftar kategori/genre buku yang dapat dikelola Admin');
+        if(isCategory)categories=updated;else genres=updated;
+        render();status.textContent=(isCategory?'Kategori':'Genre')+' berhasil dihapus dari daftar pilihan.';
+      }catch(err){status.textContent='Gagal menghapus pilihan: '+err.message;}
+    }
   });
   document.getElementById('taxonomyReload').addEventListener('click',load);
 
