@@ -336,6 +336,7 @@ function init(){
           'Pemeriksaan duplikat tidak tersedia. Periksa katalog secara manual lalu beri konfirmasi.');
         return;
       }
+      if(submit)submit.disabled=false;
       bypassNext=true;
       try{form.requestSubmit(submit);}
       finally{bypassNext=false;}
