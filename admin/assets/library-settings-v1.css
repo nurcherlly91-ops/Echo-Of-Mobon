@@ -1,0 +1,23 @@
+/* Echo of Mobon: Pengaturan kategori dan foto buku fisik */
+.settings-subnav{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 22px;padding:8px;background:#eff7f5;border:1px solid #cfe5df;border-radius:15px}
+.settings-subtab{flex:1 1 185px;border:1px solid transparent;background:transparent;color:#205663;border-radius:11px;padding:13px 12px;font:700 .9rem inherit;cursor:pointer;min-height:46px}
+.settings-subtab.active{background:linear-gradient(125deg,#0a607e,#11a6aa);color:#fff;box-shadow:0 5px 14px #0a607e30}
+.settings-subtab:focus-visible{outline:3px solid #cda64e;outline-offset:2px}
+#tab-settings .taxonomy-panel{margin-top:12px;min-height:unset}
+#tab-settings .taxonomy-panel .taxonomy-grid{margin-top:18px}
+#tab-settings .taxonomy-panel .taxonomy-heading{padding:8px 3px 12px}
+.settings-bulk-edit{margin:12px 0;border:1px solid #d3e1dc;border-radius:12px;padding:11px 13px;background:#f7faf8}
+.settings-bulk-edit summary{cursor:pointer;color:#165b68;font-weight:700}
+.settings-bulk-edit>.grid2{margin-top:14px}
+.taxonomy-item>span{min-width:0;flex:1;overflow-wrap:anywhere}
+.taxonomy-edit{border:1px solid #bbd9d3;border-radius:9px;background:#f1faf6;color:#17576b;font-size:.79rem;font-weight:750;padding:7px 10px;cursor:pointer}
+.taxonomy-edit:hover{background:#daf1e9}
+.smart-barcode-row{padding:11px 13px;background:#eaf5f4;border:1px dashed #8bc0ba;border-radius:12px;margin:4px 0 12px}
+.smart-barcode-row>div{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.smart-barcode-row .btn{min-height:44px;cursor:pointer;flex:0 1 auto}
+.smart-barcode-row label{position:relative;display:inline-flex;align-items:center;justify-content:center}
+.smart-barcode-row input[type=file]{position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none}
+.smart-barcode-row small{display:block;color:#506b6e;margin-top:8px;line-height:1.5}
+.smart-barcode-row [role=status]{display:block;font-size:.82rem;color:#17655c;margin-top:8px;min-height:1em}
+.smart-barcode-row [role=status].error{color:#a04437}
+@media(max-width:550px){.smart-barcode-row>div{display:block}.smart-barcode-row .btn{width:100%}.settings-subtab{flex-basis:100%}.taxonomy-edit{padding:7px 8px}.taxonomy-item{gap:6px}.taxonomy-card{padding:14px}}
