@@ -91,17 +91,23 @@ function init(){
      const s=await SB.session();if(!s?.access_token)throw new Error('Sesi admin berakhir. Masuk kembali.');
      const [rows,d]=await Promise.all([
        SB.select('books','select=*&id=eq.'+encodeURIComponent(id)+'&limit=1',s.access_token),
-       SB.rpc('admin_dashboard_data',{},s.access_token)
+       // Pengeditan tetap dapat dibuka bila layanan pengaturan sedang lambat.
+       Promise.race([
+         SB.rpc('admin_dashboard_data',{},s.access_token).catch(()=>({settings:[]})),
+         new Promise(resolve=>setTimeout(()=>resolve({settings:[]}),9000))
+       ])
      ]);
      if(run!==serial||!dialog.open)return;
      if(!rows?.length)throw new Error('Buku tidak ditemukan.');
      book=rows[0];
      const settings=Array.isArray(d?.settings)?d.settings:[];
-     const val=(key,fallback)=>{const result=settings.find(x=>x.key===key)?.value;return Array.isArray(result)?result:fallback;};
+     const val=(key,fallback)=>{const result=settings.find(x=>x.key===key)?.value;return Array.isArray(result)&&result.length?result:fallback;};
+     const liveCats=Array.from(document.getElementById('bookCategory')?.options||[]).map(x=>x.value).filter(Boolean);
+     const liveGenres=window.EOMMULTIGENRE?.physical?.options||[];
      $('eomEditIdentity').textContent='Kode koleksi: '+(book.collection_code||'—')+' · QR dan riwayat peminjaman tidak berubah.';
      $('eomEditTitle').value=book.title||'';
      $('eomEditAuthor').value=book.author||'';
-     selectOptions($('eomEditCategory'),val('book_categories',EOMONLINE.categories),book.category,'Pilih kategori');
+     selectOptions($('eomEditCategory'),val('book_categories',liveCats.length?liveCats:EOMONLINE.categories),book.category,'Pilih kategori');
      selectOptions($('eomEditLevel'),EOMONLINE.levels,book.reader_level,'Pilih tingkat');
      $('eomEditPublisher').value=book.publisher||'';
      $('eomEditYear').value=book.publication_year??'';
@@ -120,7 +126,7 @@ function init(){
      $('eomEditCoverFile').value='';$('eomEditRemoveCover').checked=false;
      originalCover=book.cover_url||'';preview(originalCover);
      genres=splitGenres(book.genre);
-     choices=unique([...val('book_genres',knownGenres),...knownGenres,...genres]);
+     choices=unique([...val('book_genres',liveGenres.length?liveGenres:knownGenres),...knownGenres,...genres]);
      $('eomEditGenreSearch').value='';showGenres();message('');
    }catch(e){if(run===serial)message('❌ Data gagal dibuka: '+e.message,true);}
    finally{if(run===serial){loading=false;form.classList.remove('loading');}}
