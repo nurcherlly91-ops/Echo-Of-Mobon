@@ -1,6 +1,6 @@
 /* Echo of Mobon: Pengaturan kategori dan foto buku fisik */
 .settings-subnav{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 22px;padding:8px;background:#eff7f5;border:1px solid #cfe5df;border-radius:15px}
-.settings-subtab{flex:1 1 185px;border:1px solid transparent;background:transparent;color:#205663;border-radius:11px;padding:13px 12px;font:700 .9rem inherit;cursor:pointer;min-height:46px}
+.settings-subtab{flex:1 1 185px;border:1px solid transparent;background:transparent;color:#205663;border-radius:11px;padding:13px 12px;font-weight:700;font-size:.9rem;font-family:inherit;cursor:pointer;min-height:46px}
 .settings-subtab.active{background:linear-gradient(125deg,#0a607e,#11a6aa);color:#fff;box-shadow:0 5px 14px #0a607e30}
 .settings-subtab:focus-visible{outline:3px solid #cda64e;outline-offset:2px}
 #tab-settings .taxonomy-panel{margin-top:12px;min-height:unset}
