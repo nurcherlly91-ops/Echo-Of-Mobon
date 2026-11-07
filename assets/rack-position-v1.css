@@ -11,3 +11,9 @@
 .eom-rack-next-preview small{color:#55736c;font-size:.8rem;line-height:1.4}
 .chip.eom-rack-position{background:#e6f7f0!important;border:1px solid #9ed5ba!important;color:#175b43!important;font-weight:800!important}
 @media(max-width:600px){.eom-rack-summary{padding:12px}.eom-rack-index{padding:5px 7px;font-size:.79rem}}
+
+/* Loading status and failures must never be mistaken for an empty catalog. */
+.admin-load-health{margin:14px 0;padding:12px 16px;border-radius:13px;border:1px solid #bfdae3;background:#edf8fb;color:#195264;font-size:.9rem;font-weight:650;line-height:1.5}
+.admin-load-health[data-state="ok"]{border-color:#b5d9c1;background:#eaf7f0;color:#206144}
+.admin-load-health[data-state="error"]{border-color:#ebc6ad;background:#fff3e8;color:#863d2c}
+.admin-load-health:empty{display:none}
