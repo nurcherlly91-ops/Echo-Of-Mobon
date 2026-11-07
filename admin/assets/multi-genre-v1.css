@@ -26,3 +26,4 @@
 #eomEditGenreStatus{color:#a54c34;font-size:.85rem}
 @media(max-width:520px){.eom-mgenre{padding:12px}.eom-mgenre-choices{grid-template-columns:repeat(2,minmax(0,1fr));max-height:245px}.eom-mgenre-item{padding:9px 8px;font-size:.79rem}.eom-genre-edit-dialog .modal{padding:15px}}
 @media(max-width:350px){.eom-mgenre-choices{grid-template-columns:1fr}}
+.eom-genre-in-admin{margin-top:5px;color:#0c7065;font-weight:750;font-size:.77rem;line-height:1.4;max-width:310px;overflow-wrap:anywhere}
