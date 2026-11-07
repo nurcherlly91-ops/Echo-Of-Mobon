@@ -1,0 +1,13 @@
+/* Echo of Mobon • nomor posisi rak dinamis (bukan kode inventaris permanen) */
+.eom-rack-summary{display:flex;flex-direction:column;gap:6px;margin:0 0 16px;padding:16px;border:1px solid #b6d6d3;border-radius:15px;background:linear-gradient(115deg,#eff9f7,#fffbea);color:#184c56;line-height:1.4}
+.eom-rack-summary strong{font-size:1.05rem}
+.eom-rack-summary span{font-size:.88rem}
+.eom-rack-summary small{color:#63696a;font-size:.77rem}
+.eom-rack-index{display:inline-block;white-space:nowrap;border-radius:8px;padding:5px 9px;border:1px solid #b5ddd5;background:#e6f7f3;color:#08616c;letter-spacing:.025em;font-weight:800}
+.eom-row-archived td{background:#f4f2f0!important;color:#7d807f!important}
+.eom-row-archived .eom-rack-index{color:#8d8d8d;border-color:#e1e1df;background:#f0f0f0}
+.eom-rack-next-preview{margin:0 0 14px;padding:12px 14px;background:#e9f7f0;border:1px solid #bbddcd;border-radius:13px;display:flex;flex-direction:column;gap:5px;color:#1c635a}
+.eom-rack-next-preview strong{font-weight:800}
+.eom-rack-next-preview small{color:#55736c;font-size:.8rem;line-height:1.4}
+.chip.eom-rack-position{background:#e6f7f0!important;border:1px solid #9ed5ba!important;color:#175b43!important;font-weight:800!important}
+@media(max-width:600px){.eom-rack-summary{padding:12px}.eom-rack-index{padding:5px 7px;font-size:.79rem}}
