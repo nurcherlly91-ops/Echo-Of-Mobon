@@ -21,3 +21,10 @@
 .smart-barcode-row [role=status]{display:block;font-size:.82rem;color:#17655c;margin-top:8px;min-height:1em}
 .smart-barcode-row [role=status].error{color:#a04437}
 @media(max-width:550px){.smart-barcode-row>div{display:block}.smart-barcode-row .btn{width:100%}.settings-subtab{flex-basis:100%}.taxonomy-edit{padding:7px 8px}.taxonomy-item{gap:6px}.taxonomy-card{padding:14px}}
+/* Hasil kategori dan genre yang terisi otomatis */
+.eom-auto-taxonomy-note{display:flex;flex-direction:column;gap:5px;line-height:1.4;margin:3px 0 11px;padding:10px 12px;border:1px solid #a6d4c2;border-radius:12px;background:#eaf7f0;color:#195a43;font-size:.83rem}
+.eom-auto-taxonomy-note b{font-weight:800}.eom-auto-taxonomy-note strong{font-weight:800}
+.eom-auto-taxonomy-note small{color:#546d60;font-size:.77rem}
+.eom-auto-taxonomy-note.eom-auto-warning{border-color:#ead397;background:#fff8df;color:#7c5a14}
+.eom-auto-taxonomy-note.eom-auto-warning small{color:#7b6432}
+#bookCategory[data-eom-auto-value],#bookGenre[data-eom-auto-value],#digitalCategory[data-eom-auto-value],#digitalGenre[data-eom-auto-value]{border-color:#80c9b0;box-shadow:0 0 0 2px #abdec624}
