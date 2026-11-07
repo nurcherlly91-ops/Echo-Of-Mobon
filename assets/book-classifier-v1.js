@@ -156,7 +156,12 @@ const GENRE_RULES=[
 function suggestGenres(input){
  const data=typeof input==='string'?{title:input}:input||{};
  const title=String(data.title||'').slice(0,250);
- const subjects=[data.genre,data.category,Array.isArray(data.subjects)?data.subjects.join(' '):data.subjects].filter(Boolean).join(' ').slice(0,1200);
+ const rawCategory=String(data.category||'');
+ const isKnownCategory=['Novel & Cerpen','Komik & Novel Grafis','Buku Anak-anak','Sains & Teknologi',
+  'Sejarah & Budaya','Buku Ajar & Akademik','Filsafat & Agama','Puisi & Drama',
+  'Fabel & Dongeng','Biografi & Autobiografi','Referensi & Ensiklopedia']
+  .some(x=>norm(x)===norm(rawCategory));
+ const subjects=[data.genre,isKnownCategory?'':rawCategory,Array.isArray(data.subjects)?data.subjects.join(' '):data.subjects].filter(Boolean).join(' ').slice(0,1200);
  const description=String(data.description||data.summary||'').slice(0,3500);
  const ocr=String(data.detected_text||data.ocr_text||'').slice(0,1000);
  if(!title&&!subjects&&!description&&!ocr)return [];
