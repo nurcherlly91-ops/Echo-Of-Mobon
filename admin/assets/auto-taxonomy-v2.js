@@ -62,7 +62,7 @@ function init(){
    timer=setTimeout(classifyTypedPhysical,180);
  });
  [bookCategory,bookGenre].forEach(select=>select?.addEventListener('change',event=>{
-   if(event.isTrusted)renderPhysical({...latest,needsReview:false});
+   renderPhysical({...latest,needsReview:event.isTrusted?false:latest?.needsReview});
  }));
  physical.addEventListener('submit',()=>{
    if(physicalTitle?.value.trim()&&(!bookCategory?.value||!bookGenre?.value)){
@@ -100,7 +100,8 @@ function init(){
  }
  [digitalCategory,digitalGenre].forEach(select=>{
    select?.addEventListener('change',e=>{
-     if(e.isTrusted){select.dataset.eomManualOverride='true';renderDigital(null);}
+     if(e.isTrusted)select.dataset.eomManualOverride='true';
+     renderDigital(null);
    });
  });
  digitalTitle?.addEventListener('input',()=>{
