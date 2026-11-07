@@ -80,6 +80,11 @@ function init(){
  }
  const mutations=new MutationObserver(()=>{clearTimeout(window.__eomLazyCoverTimer);window.__eomLazyCoverTimer=setTimeout(scan,250);});
  mutations.observe(root,{childList:true,subtree:true});
+ document.addEventListener('eom:book-full-edit-saved',e=>{
+   const id=String(e.detail?.id||'');
+   if(id)cache.delete(id);
+   setTimeout(scan,600);
+ });
  document.getElementById('refreshBtn')?.addEventListener('click',()=>setTimeout(scan,500));
  setTimeout(scan,550);
 }
