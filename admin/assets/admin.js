@@ -44,8 +44,55 @@ async function refreshAll(){
   }
  }
 }
-function render(){$('statBooks').textContent=data.books.length;$('statDigital').textContent=data.digital.length;$('statMembers').textContent=data.members.length;$('statVisitors').textContent=data.visitors.length;$('statRequests').textContent=data.requests.filter(x=>x.status==='Menunggu').length;renderBooks();renderDigital();renderMembers();renderVisitors();renderRequests();renderSettings()}
-function renderBooks(){$('booksTable').innerHTML=`<table><tr><th>Kode</th><th>Judul</th><th>Penulis</th><th>Rak</th><th>Stok</th><th>Status</th><th>Aksi</th></tr>${data.books.map(b=>`<tr><td>${EOMONLINE.esc(b.collection_code||'-')}</td><td>${EOMONLINE.esc(b.title)}</td><td>${EOMONLINE.esc(b.author||'-')}</td><td>${EOMONLINE.esc(b.rack_no||'-')}</td><td>${b.qty_available??0}/${b.qty_total??0}</td><td>${EOMONLINE.esc(b.book_status||'-')}</td><td><button class="btn" data-edit-book="${b.id}">Ubah</button></td></tr>`).join('')||'<tr><td colspan="7">Belum ada buku.</td></tr>'}</table>`;document.querySelectorAll('[data-edit-book]').forEach(x=>x.onclick=()=>editBook(x.dataset.editBook))}
+function render(){$('statBooks').textContent=data.books.filter(b=>b.active!==false).length;$('statDigital').textContent=data.digital.length;$('statMembers').textContent=data.members.length;$('statVisitors').textContent=data.visitors.length;$('statRequests').textContent=data.requests.filter(x=>x.status==='Menunggu').length;renderBooks();renderDigital();renderMembers();renderVisitors();renderRequests();renderSettings()}
+function renderBooks(){
+ const sequence=window.EOMRACK?.enumerate(data.books) || {ordered:data.books.filter(b=>b.active!==false),positions:new Map(),counts:new Map()};
+ const archived=data.books.filter(b=>b.active===false).sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''),'id'));
+ const rows=[...sequence.ordered,...archived];
+ const shelfCount=sequence.counts.size;
+ const summary='<div class="eom-rack-summary"><strong>📚 '+sequence.ordered.length+' judul aktif · '+shelfCount+' rak</strong><span>Nomor posisi rak otomatis 001, 002, 003… dan langsung tersusun ulang jika koleksi diarsipkan, dipulihkan, atau dipindah rak.</span><small>Kode koleksi/QR asli tidak diubah agar riwayat peminjaman dan label buku tetap aman.</small></div>';
+ $('booksTable').innerHTML=summary+'<table><tr><th>No. Rak</th><th>Kode Tetap</th><th>Judul</th><th>Penulis</th><th>Rak</th><th>Stok</th><th>Status</th><th>Aksi</th></tr>'+
+  rows.map(b=>{
+   const isArchived=b.active===false,p=sequence.positions.get(String(b.id));
+   return '<tr class="'+(isArchived?'eom-row-archived':'')+'"><td><b class="eom-rack-index">'+EOMONLINE.esc(p?.code||'—')+'</b></td>'+
+    '<td>'+EOMONLINE.esc(b.collection_code||'-')+'</td>'+
+    '<td>'+EOMONLINE.esc(b.title)+'</td>'+
+    '<td>'+EOMONLINE.esc(b.author||'-')+'</td>'+
+    '<td>'+EOMONLINE.esc(b.rack_no||'-')+'</td>'+
+    '<td>'+EOMONLINE.esc((b.qty_available??0)+'/'+(b.qty_total??0))+'</td>'+
+    '<td>'+EOMONLINE.esc(isArchived?'Diarsipkan':(b.book_status||'-'))+'</td>'+
+    '<td><button class="btn" data-edit-book="'+EOMONLINE.esc(b.id)+'">Ubah</button> '+
+    (isArchived?'<button class="btn ghost mini-btn" data-restore-book="'+EOMONLINE.esc(b.id)+'">Pulihkan</button>':
+     '<button class="btn danger mini-btn" data-archive-book="'+EOMONLINE.esc(b.id)+'">Arsipkan</button>')+'</td></tr>';
+  }).join('')+
+  (rows.length?'':'<tr><td colspan="8">Belum ada buku fisik.</td></tr>')+'</table>'+
+  (archived.length?'<p class="muted">'+archived.length+' buku diarsipkan (tidak dihitung dalam nomor urut atau katalog publik).</p>':'');
+ document.querySelectorAll('[data-edit-book]').forEach(x=>x.onclick=()=>editBook(x.dataset.editBook));
+ document.querySelectorAll('[data-archive-book]').forEach(x=>x.onclick=()=>toggleArchiveBook(x.dataset.archiveBook,false));
+ document.querySelectorAll('[data-restore-book]').forEach(x=>x.onclick=()=>toggleArchiveBook(x.dataset.restoreBook,true));
+}
+async function toggleArchiveBook(id,restore){
+ const selected=data.books.find(x=>String(x.id)===String(id));
+ if(!selected)return;
+ const promptText=restore?
+   'Pulihkan “'+selected.title+'” ke katalog? Nomor posisi rak akan dihitung ulang otomatis.':
+   'Arsipkan “'+selected.title+'” dari katalog aktif?\n\nNomor urut rak akan menutup celah secara otomatis. Kode tetap, QR, dan riwayat peminjaman tidak dihapus.';
+ if(!confirm(promptText))return;
+ try{
+   const s=await SB.session();if(!s?.access_token)throw new Error('Sesi Admin berakhir. Silakan login kembali.');
+   const current=await SB.rpc('admin_dashboard_data',{},s.access_token)||{};
+   const live=(current.books||[]).find(x=>String(x.id)===String(id));
+   if(!live)throw new Error('Buku tidak ditemukan pada katalog.');
+   if(!restore){
+     const openLoans=(current.loans||[]).filter(l=>String(l.book_id)===String(id)&&['Dipinjam','Terlambat'].includes(l.status));
+     const openRequests=(current.requests||[]).filter(x=>String(x.book_id)===String(id)&&x.status==='Menunggu');
+     if(openLoans.length||openRequests.length)throw new Error('Buku masih dipinjam atau memiliki permohonan aktif. Selesaikan dahulu sebelum diarsipkan.');
+   }
+   await SB.rpc('admin_update_book',{p_id:id,p_data:{active:!!restore}},s.access_token);
+   await refreshAll();
+   alert(restore?'Buku berhasil dipulihkan. Nomor urut rak telah disesuaikan.':'Buku telah diarsipkan. Nomor urut rak aktif langsung tersusun ulang.');
+ }catch(e){alert('Gagal mengubah status buku: '+e.message);}
+}
 async function editBook(id){const b=data.books.find(x=>x.id===id);if(!b)return;const title=prompt('Judul buku:',b.title||'');if(title===null)return;const author=prompt('Penulis:',b.author||'');if(author===null)return;const category=prompt('Kategori:',b.category||'');if(category===null)return;const level=prompt('Tingkat pembaca:',b.reader_level||'');if(level===null)return;const rack=prompt('Nomor rak:',b.rack_no??1);if(rack===null)return;const total=prompt('Jumlah total:',b.qty_total??1);if(total===null)return;const available=prompt('Jumlah tersedia:',b.qty_available??0);if(available===null)return;const status=prompt('Status buku:',b.book_status||'Tersedia');if(status===null)return;const description=prompt('Deskripsi:',b.description||'');if(description===null)return;try{await SB.rpc('admin_update_book',{p_id:id,p_data:{title,author,category,reader_level:level,rack_no:Number(rack||1),qty_total:Number(total||0),qty_available:Number(available||0),book_status:status,description}},token);await refreshAll();alert('Data buku berhasil disimpan.')}catch(e){alert('Gagal menyimpan: '+e.message)}}
 $('addBookBtn').onclick=()=>{$('bookForm').reset();$('bookQty').value=1;$('bookDialog').showModal()};
 $('bookForm').onsubmit=async e=>{e.preventDefault();const rack=Number($('bookRack').value||1),qty=Number($('bookQty').value||1);try{await SB.insert('books',{title:$('bookTitle').value.trim(),author:$('bookAuthor').value.trim()||null,category:$('bookCategory').value||null,reader_level:$('bookLevel').value||null,rack_no:rack,qty_total:qty,qty_available:qty,book_status:'Tersedia',description:$('bookDescription').value.trim()||null,active:true},token);$('bookDialog').close();await refreshAll();alert('Buku berhasil ditambahkan.')}catch(err){alert(err.message)}};
