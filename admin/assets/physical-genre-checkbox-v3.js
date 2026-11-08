@@ -173,7 +173,7 @@ function init(){
    refresh:render,
    get state(){return{chosen:[...selected.values()],manual};}
  };
- Object.assign(window.EOMPHYSICALGENRES,api);
+ window.EOMPHYSICALGENRES=api;
  updateCatalog();render();
  // If a partially completed form already has an auto-suggested genre, retain it.
  if(select.value)changeSelection(split(select.value),false,false);
