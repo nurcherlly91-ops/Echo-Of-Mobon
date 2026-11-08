@@ -23,9 +23,10 @@ function init(){
   section.innerHTML='<div class="eom-mgenre-heading"><strong>🏷️ Genre Buku · Pilih 1–5</strong><span class="eom-mgenre-count">0/5 terpilih</span></div>'+
    '<p class="eom-mgenre-instruction">Pilih beberapa genre sesuai isi dan sinopsis buku. Saran otomatis berasal dari judul, deskripsi, serta metadata ISBN—bukan pembacaan seluruh halaman.</p>'+
    '<div class="eom-mgenre-selected" aria-live="polite"><em>Belum ada genre dipilih.</em></div>'+
-   '<label class="eom-mgenre-search-label">Cari genre (pisahkan dengan koma untuk beberapa pilihan)<input class="eom-mgenre-search" type="search" placeholder="Contoh: Religi Islami, Non Fiksi" autocomplete="off"></label>'+
-   '<button class="eom-mgenre-apply-search btn ghost" type="button">✓ Pilih Genre dari Pencarian</button>'+ 
-   '<div class="eom-mgenre-choices" role="group" aria-label="Pilih maksimal lima genre buku"></div>'+
+   '<label class="eom-mgenre-search-label">Cari genre (opsional). Pilih dengan memberi tanda centang pada daftar di bawah.<input class="eom-mgenre-search" type="search" placeholder="Cari: Kisah, Inspiratif, Fiksi…" autocomplete="off"></label>'+
+   '<div class="eom-mgenre-toolbar"><strong>☑ Centang genre sesuai isi buku (1–5)</strong><span class="eom-mgenre-available">Memuat genre…</span></div>'+ 
+   '<div class="eom-mgenre-choices" role="group" aria-label="Centang satu hingga lima genre buku"></div>'+ 
+   '<div class="eom-mgenre-search-actions"><button class="eom-mgenre-apply-search btn ghost" type="button">✓ Pilih yang Cocok dari Pencarian</button><button class="eom-mgenre-reset-search btn ghost" type="button">Tampilkan Semua Genre</button></div>'+
    '<p class="eom-mgenre-status" role="status" aria-live="polite">Genre dapat dipilih lebih dari satu, maksimal lima.</p>';
   return section;
  }
@@ -41,11 +42,14 @@ function init(){
    const choiceBox=widget.querySelector('.eom-mgenre-choices');
    const search=widget.querySelector('.eom-mgenre-search');
    const addSearch=widget.querySelector('.eom-mgenre-apply-search');
+   const resetSearch=widget.querySelector('.eom-mgenre-reset-search');
+   const available=widget.querySelector('.eom-mgenre-available');
    const status=widget.querySelector('.eom-mgenre-status');
    const form=document.getElementById(formId);
    const title=document.getElementById(titleId);
    const description=document.getElementById(descriptionId);
-   const state={kind,legacy,widget,options:optionsFrom(legacy).concat((window.EOMTaxonomy?.get?.().genres||[]).filter(v=>!optionsFrom(legacy).some(x=>canonical(x)===canonical(v)))),chosen:split(legacy.value),manual:false,auto:[],wasReady:false};
+   const initial=optionsFrom(legacy);
+   const state={kind,legacy,widget,options:initial.concat((window.EOMTaxonomy?.get?.().genres||window.EOMTaxonomy?.fallbackGenres||[]).filter(v=>!initial.some(x=>canonical(x)===canonical(v)))),chosen:split(legacy.value),manual:false,auto:[],wasReady:false};
    const choicesFromCatalog=()=>{
      const live=optionsFrom(legacy);
      const known=window.EOMTaxonomy?.get?.().genres||[];
@@ -80,28 +84,48 @@ function init(){
    function render(){
      count.textContent=state.chosen.length+'/5 terpilih';
      selection.innerHTML=state.chosen.length
-       ?state.chosen.map(x=>'<span class="eom-mgenre-tag">'+esc(x)+'</span>').join('')
-       :'<em>Belum ada genre dipilih.</em>';
+       ?state.chosen.map(x=>'<span class="eom-mgenre-tag">✓ '+esc(x)+'</span>').join('')
+       :'<em>Belum ada genre dicentang. Centang satu sampai lima pilihan di bawah.</em>';
+     available.textContent=state.options.length+' genre tersedia';
      const queries=search.value.split(',').map(canonical).filter(Boolean);
-     const visible=state.options.filter(x=>!queries.length||queries.some(q=>canonical(x).includes(q)));
+     const results=state.options.map((value,index)=>({
+       value,index,chosen:state.chosen.some(x=>canonical(x)===canonical(value)),
+       match:queries.length>0&&queries.some(q=>canonical(value).includes(q))
+     }));
+     // Never hide all the checkbox choices because a search term is not an
+     // exact catalog genre. Put matches and checked items at the top instead.
+     results.sort((a,b)=>Number(b.match)-Number(a.match)||
+       Number(b.chosen)-Number(a.chosen)||a.index-b.index);
      choiceBox.replaceChildren();
-     for(const v of visible){
-       const row=document.createElement('label');
-       row.className='eom-mgenre-item';
-       const checkbox=document.createElement('input');
-       checkbox.type='checkbox';
-       checkbox.value=v;
-       checkbox.checked=state.chosen.some(x=>canonical(x)===canonical(v));
-       const text=document.createElement('span');
-       text.textContent=v;
-       row.append(checkbox,text);
-       if(checkbox.checked)row.classList.add('selected');
-       choiceBox.appendChild(row);
-     }
-     if(!visible.length){
+     if(results.length){
+       if(queries.length){
+         const matched=results.filter(x=>x.match).length;
+         const helper=document.createElement('p');
+         helper.className='eom-mgenre-search-help';
+         helper.textContent=matched
+           ?matched+' genre cocok ditampilkan paling atas. Centang kotaknya; pilihan lain tetap tersedia.'
+           :'Tidak ada nama genre yang persis cocok. Semua pilihan tetap ditampilkan agar dapat dicentang.';
+         choiceBox.appendChild(helper);
+       }
+       for(const item of results){
+         const row=document.createElement('label');
+         row.className='eom-mgenre-item';
+         const checkbox=document.createElement('input');
+         checkbox.type='checkbox';
+         checkbox.value=item.value;
+         checkbox.checked=item.chosen;
+         checkbox.setAttribute('aria-label','Pilih genre '+item.value);
+         if(item.chosen)row.classList.add('selected');
+         if(item.match)row.classList.add('matched');
+         const checkText=document.createElement('span');
+         checkText.textContent=item.value;
+         row.append(checkbox,checkText);
+         choiceBox.appendChild(row);
+       }
+     }else{
        const empty=document.createElement('p');
        empty.className='eom-mgenre-empty';
-       empty.textContent=state.options.length?'Genre tidak ditemukan. Coba kata lain.':'Daftar genre belum tersedia. Tekan “Muat Ulang Daftar Genre” atau periksa Pengaturan.';
+       empty.textContent='Genre belum tersedia. Tekan Muat Ulang Daftar Genre, lalu coba lagi.';
        choiceBox.appendChild(empty);
      }
    }
@@ -178,6 +202,7 @@ function init(){
      if(missing.length)message('✅ Genre yang cocok terpilih. Tidak ditemukan: '+missing.join(', '),true);
    }
    addSearch?.addEventListener('click',selectFromSearch);
+   resetSearch?.addEventListener('click',()=>{search.value='';render();message('✅ Semua genre tersedia untuk dicentang. Pilih 1–5 sesuai buku.');});
    search.addEventListener('keydown',e=>{
      if(e.key==='Enter'){e.preventDefault();selectFromSearch();}
    });
