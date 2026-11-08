@@ -34,3 +34,20 @@
 #eomReloadBookGenres{display:block;min-height:38px;margin:4px 0 12px;border-color:#9ecdc5;color:#145b63;background:#eff9f5;font-weight:750;white-space:normal}
 #eomGenreSyncStatus{padding:8px 11px;border-radius:10px;background:#eef8f3;border:1px solid #cfdfd7;max-width:100%}
 @media(max-width:520px){.eom-mgenre-apply-search{font-size:.8rem;padding:8px 7px}#eomReloadBookGenres{width:100%}}
+
+/* Genre Buku: kotak centang selalu tampil, 1–5 pilihan sesuai isi buku. */
+.eom-mgenre-toolbar{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;margin:2px 0 -5px}
+.eom-mgenre-toolbar strong{font-size:.89rem;color:#14645e}
+.eom-mgenre-available{font-size:.77rem;border-radius:99px;background:#deefe8;padding:5px 9px;color:#276b58;font-weight:700}
+.eom-mgenre-choices{min-height:185px;max-height:360px;align-content:start;grid-auto-rows:minmax(46px,auto);background:#f4faf7;border:1px solid #bddbd1;padding:8px}
+.eom-mgenre-search-help{grid-column:1/-1;margin:0 0 4px;padding:8px 10px;background:#e8f2ec;color:#295d56;border-radius:8px;font-size:.8rem;line-height:1.4}
+.eom-mgenre-item{min-height:48px;gap:9px}
+.eom-mgenre-item input[type=checkbox]{appearance:auto!important;-webkit-appearance:checkbox!important;display:block!important;visibility:visible!important;width:22px!important;height:22px!important;flex-shrink:0;opacity:1!important;position:static!important;pointer-events:auto!important}
+.eom-mgenre-item.matched{border-color:#56a99e;background:#f1fff5}
+.eom-mgenre-item.selected{border-color:#4fa78d;background:#d9f4e7}
+.eom-mgenre-search-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.eom-mgenre-search-actions>button{margin:0;min-height:43px;white-space:normal;font-size:.79rem;line-height:1.4;padding:8px 6px}
+.eom-mgenre-reset-search{background:#fff;border:1px solid #bed6d0;border-radius:10px;color:#1a6662;font-weight:700}
+.eom-mgenre-selected{padding:7px 0}
+@media(max-width:520px){.eom-mgenre-choices{min-height:210px;max-height:350px;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.eom-mgenre-search-actions{grid-template-columns:1fr}.eom-mgenre-item{min-height:50px}}
+@media(max-width:360px){.eom-mgenre-choices{grid-template-columns:1fr}}
