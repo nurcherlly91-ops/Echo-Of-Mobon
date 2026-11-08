@@ -23,7 +23,8 @@ function init(){
   section.innerHTML='<div class="eom-mgenre-heading"><strong>🏷️ Genre Buku · Pilih 1–5</strong><span class="eom-mgenre-count">0/5 terpilih</span></div>'+
    '<p class="eom-mgenre-instruction">Pilih beberapa genre sesuai isi dan sinopsis buku. Saran otomatis berasal dari judul, deskripsi, serta metadata ISBN—bukan pembacaan seluruh halaman.</p>'+
    '<div class="eom-mgenre-selected" aria-live="polite"><em>Belum ada genre dipilih.</em></div>'+
-   '<label class="eom-mgenre-search-label">Cari genre<input class="eom-mgenre-search" type="search" placeholder="Contoh: Fiksi, Horor, Misteri…" autocomplete="off"></label>'+
+   '<label class="eom-mgenre-search-label">Cari genre (pisahkan dengan koma untuk beberapa pilihan)<input class="eom-mgenre-search" type="search" placeholder="Contoh: Religi Islami, Non Fiksi" autocomplete="off"></label>'+
+   '<button class="eom-mgenre-apply-search btn ghost" type="button">✓ Pilih Genre dari Pencarian</button>'+ 
    '<div class="eom-mgenre-choices" role="group" aria-label="Pilih maksimal lima genre buku"></div>'+
    '<p class="eom-mgenre-status" role="status" aria-live="polite">Genre dapat dipilih lebih dari satu, maksimal lima.</p>';
   return section;
@@ -39,12 +40,22 @@ function init(){
    const count=widget.querySelector('.eom-mgenre-count');
    const choiceBox=widget.querySelector('.eom-mgenre-choices');
    const search=widget.querySelector('.eom-mgenre-search');
+   const addSearch=widget.querySelector('.eom-mgenre-apply-search');
    const status=widget.querySelector('.eom-mgenre-status');
    const form=document.getElementById(formId);
    const title=document.getElementById(titleId);
    const description=document.getElementById(descriptionId);
-   const state={kind,legacy,widget,options:optionsFrom(legacy),chosen:split(legacy.value),manual:false,auto:[],wasReady:false};
-   const choicesFromCatalog=()=>optionsFrom(legacy);
+   const state={kind,legacy,widget,options:optionsFrom(legacy).concat((window.EOMTaxonomy?.get?.().genres||[]).filter(v=>!optionsFrom(legacy).some(x=>canonical(x)===canonical(v)))),chosen:split(legacy.value),manual:false,auto:[],wasReady:false};
+   const choicesFromCatalog=()=>{
+     const live=optionsFrom(legacy);
+     const known=window.EOMTaxonomy?.get?.().genres||[];
+     const combined=live.concat(known);
+     const unique=[];
+     for(const item of combined){
+       if(!unique.some(v=>canonical(v)===canonical(item)))unique.push(item);
+     }
+     return unique;
+   };
    function message(s,bad=false){
      status.textContent=s;
      status.classList.toggle('eom-mgenre-error',bad);
@@ -71,8 +82,8 @@ function init(){
      selection.innerHTML=state.chosen.length
        ?state.chosen.map(x=>'<span class="eom-mgenre-tag">'+esc(x)+'</span>').join('')
        :'<em>Belum ada genre dipilih.</em>';
-     const q=canonical(search.value);
-     const visible=state.options.filter(x=>!q||canonical(x).includes(q));
+     const queries=search.value.split(',').map(canonical).filter(Boolean);
+     const visible=state.options.filter(x=>!queries.length||queries.some(q=>canonical(x).includes(q)));
      choiceBox.replaceChildren();
      for(const v of visible){
        const row=document.createElement('label');
@@ -90,7 +101,7 @@ function init(){
      if(!visible.length){
        const empty=document.createElement('p');
        empty.className='eom-mgenre-empty';
-       empty.textContent=state.options.length?'Genre tidak ditemukan. Coba kata lain.':'Memuat pilihan genre dari Pengaturan…';
+       empty.textContent=state.options.length?'Genre tidak ditemukan. Coba kata lain.':'Daftar genre belum tersedia. Tekan “Muat Ulang Daftar Genre” atau periksa Pengaturan.';
        choiceBox.appendChild(empty);
      }
    }
@@ -145,6 +156,31 @@ function init(){
      setSelection(next,{manual:true});
    });
    search.addEventListener('input',render);
+   function selectFromSearch(){
+     const queries=search.value.split(',').map(canonical).filter(Boolean);
+     if(!queries.length){message('Ketik nama genre terlebih dahulu.',true);return;}
+     const choices=choicesFromCatalog();
+     if(choices.length)state.options=choices;
+     const selected=state.chosen.slice(),missing=[];
+     for(const query of queries){
+       const found=state.options.find(x=>canonical(x)===query)||
+         (state.options.filter(x=>canonical(x).includes(query)).length===1
+           ?state.options.find(x=>canonical(x).includes(query)):null);
+       if(!found){missing.push(query);continue;}
+       if(!selected.some(v=>canonical(v)===canonical(found))&&selected.length<5)selected.push(found);
+     }
+     if(selected.length===state.chosen.length){
+       message('Tidak ada genre baru yang cocok. Cek penulisan atau coba kata lain.',true);render();return;
+     }
+     setSelection(selected,{manual:true});
+     search.value='';
+     render();
+     if(missing.length)message('✅ Genre yang cocok terpilih. Tidak ditemukan: '+missing.join(', '),true);
+   }
+   addSearch?.addEventListener('click',selectFromSearch);
+   search.addEventListener('keydown',e=>{
+     if(e.key==='Enter'){e.preventDefault();selectFromSearch();}
+   });
    document.getElementById(addId)?.addEventListener('click',()=>{
      state.manual=false;state.auto=[];state.chosen=[];
      delete legacy.dataset.eomManualOverride;
