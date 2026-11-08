@@ -25,7 +25,6 @@ function init(){
        reset=root.querySelector('#eomPhysicalGenreAll'),
        summary=root.querySelector('#eomPhysicalGenreSummary');
  if(!list||!search||!count||!status||!reset||!summary)return;
- window.EOMPHYSICALGENRES={}; // Flag to disable the old physical picker.
  const legacyLabel=select.closest('label');
  if(legacyLabel){
    legacyLabel.classList.add('eom-mgenre-legacy');
