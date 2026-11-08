@@ -266,7 +266,7 @@ function init(){
      state
    };
  }
- const physical=attach('physical',bookGenre,'bookForm','addBookBtn','bookTitle','bookDescription');
+ const physical=window.EOMPHYSICALGENRES||attach('physical',bookGenre,'bookForm','addBookBtn','bookTitle','bookDescription');
  const digital=attach('digital',digitalGenre,'digitalForm','addDigitalBtn','digitalTitle');
  const editDialog=document.createElement('dialog');
  editDialog.id='eomGenreEditDialog';
