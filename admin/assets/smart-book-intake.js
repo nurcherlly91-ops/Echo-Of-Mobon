@@ -492,6 +492,12 @@ function init(){
     if(scanning){alert('Pembacaan foto masih berjalan. Silakan periksa hasilnya sebelum menyimpan.');return;}
     const bookTitle=title.value.trim();
     if(!bookTitle){alert('Judul buku wajib diisi.');title.focus();return;}
+    const selectedGenres=window.EOMPHYSICALGENRES?.values||[];
+    if(selectedGenres.length<1||selectedGenres.length>5){
+      alert('Centang 1–5 genre buku sebelum disimpan.');
+      document.getElementById('eomPhysicalGenrePicker')?.scrollIntoView({behavior:'smooth',block:'center'});
+      return;
+    }
     const nQty=Math.max(1,Math.floor(Number(qty.value)||1));
     const nRack=Math.max(1,Math.floor(Number(rack.value)||1));
     const pubYear=year.value?Number(year.value):null;
@@ -502,6 +508,7 @@ function init(){
       if(!session?.access_token)throw new Error('Sesi Admin berakhir. Masuk kembali.');
       await SB.insert('books',{
         title:bookTitle,author:author.value.trim()||null,category:category.value||null,
+        genre:selectedGenres.join(', '),
         reader_level:level.value||null,publisher:publisher.value.trim()||null,
         publication_year:pubYear,isbn:EOMBOOKMETA.normalizeIsbn(isbnField.value)||null,
         qty_total:nQty,qty_available:nQty,book_status:'Tersedia',
