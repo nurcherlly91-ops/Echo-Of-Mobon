@@ -216,6 +216,9 @@ function init(){
      });
    }
    form?.addEventListener('submit',e=>{
+     // If admin typed "Religi Islami, Non Fiksi" directly, resolve matches
+     // before the required-genre validation, rather than blocking the save.
+     if(!state.chosen.length&&search.value.trim())selectFromSearch();
      if(!state.chosen.length){
        e.preventDefault();e.stopImmediatePropagation();
        message('⚠️ Pilih minimal satu genre sebelum menyimpan buku.',true);
