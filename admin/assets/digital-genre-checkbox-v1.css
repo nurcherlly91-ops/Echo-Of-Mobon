@@ -1,0 +1,55 @@
+/* Echo of Mobon — genre Buku Digital, centang 1–5 */
+#digitalForm #eomDigitalGenrePicker{
+ display:block!important;width:100%;box-sizing:border-box;min-width:0;
+ padding:14px;margin:12px 0 14px;
+ background:#eefbf6;border:2px solid #77bba8;border-radius:17px;
+ box-shadow:0 6px 20px rgba(18,83,80,.07);
+}
+#eomDigitalGenrePicker .eom-digital-genre-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+#eomDigitalGenrePicker .eom-digital-genre-head strong{color:#155c58;font-size:1.02rem;line-height:1.4}
+#eomDigitalGenreCount{display:inline-block;background:#15816a;color:#fff;font-size:.81rem;font-weight:800;border-radius:24px;padding:5px 10px}
+#eomDigitalGenrePicker .eom-digital-genre-help{margin:10px 0;color:#4a6d65;font-size:.83rem;line-height:1.5}
+#eomDigitalGenrePicker .eom-digital-genre-tools{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-bottom:9px}
+#eomDigitalGenreSearch{display:block;min-width:0;width:100%;padding:11px;border-radius:10px;border:1px solid #a4cdc1;background:#fff;font:inherit;font-size:.85rem;min-height:44px}
+#eomDigitalGenreAll{border-radius:10px;min-height:44px;padding:8px 11px;white-space:normal;font-weight:700;font-size:.81rem}
+#eomDigitalGenreAvailable{color:#41675f;font-size:.8rem;font-weight:750;margin:6px 0 8px}
+#eomDigitalGenreList,.eom-digital-genre-list{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));
+ align-content:start;gap:8px;min-height:195px;max-height:345px;overflow-x:hidden;overflow-y:auto!important;
+ padding:9px;background:#fff;border:1px solid #c8e1d7;border-radius:12px;box-sizing:border-box;
+ visibility:visible!important;opacity:1!important;overscroll-behavior:contain;
+}
+.eom-digital-genre-item{display:flex!important;align-items:center;min-height:49px;gap:9px;
+ padding:8px 10px;border:1px solid #d5e7dd;border-radius:10px;
+ background:#f7fbf8;color:#2b534a;cursor:pointer;font-weight:650;font-size:.82rem;line-height:1.35;
+ box-sizing:border-box;overflow-wrap:anywhere;visibility:visible!important}
+.eom-digital-genre-item.checked{background:#daf3e5;border-color:#55ac91}
+.eom-digital-genre-item.matched{border-color:#15947d;box-shadow:inset 0 0 0 1px #6ac2ad}
+.eom-digital-genre-item input[type="checkbox"]{appearance:auto!important;-webkit-appearance:checkbox!important;
+ display:block!important;position:static!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;
+ width:22px!important;height:22px!important;min-width:22px!important;flex:0 0 22px;margin:0!important;accent-color:#12826c}
+.eom-digital-genre-item span{min-width:0;overflow-wrap:anywhere}
+#eomDigitalGenreSummary{margin-top:12px;border-radius:10px;background:#e0f5ea;color:#205b4e;font-size:.85rem;padding:9px 11px;line-height:1.5}
+#eomDigitalGenreStatus{font-size:.82rem;line-height:1.4;margin:8px 0 0;color:#296957}
+#eomDigitalGenreStatus.error{color:#b23c35;font-weight:800}
+#digitalForm label:has(> #digitalGenre){display:none!important}
+.eom-digital-genre-editor{border:0;border-radius:18px;width:min(640px,calc(100vw - 18px));max-height:90dvh;overflow:auto;padding:0;background:#fffdf7;box-shadow:0 20px 60px #0d283b77}
+.eom-digital-genre-editor::backdrop{background:#132e34bb}
+.eom-digital-genre-edit-form{padding:16px;display:grid;gap:10px}
+.eom-digital-genre-edit-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.eom-digital-genre-edit-head h2{margin:0;font-size:1.2rem;line-height:1.3}
+.eom-digital-genre-edit-close{border:0;background:#e3ebe7;border-radius:50%;font-size:1.5rem;width:39px;height:39px;cursor:pointer}
+#eomDigitalGenreEditBookTitle{margin:0;font-weight:750;color:#264d49}
+#eomDigitalGenreEditCount{padding:6px 10px;border-radius:20px;display:inline-block;color:#fff;background:#14806a;font-weight:800;width:max-content}
+#eomDigitalGenreEditSearch{min-height:44px;padding:9px 12px;border:1px solid #a6cec0;border-radius:10px;width:100%;box-sizing:border-box}
+#eomDigitalGenreEditStatus{margin:0;color:#37635a;font-size:.85rem}
+.eom-digital-genre-edit-save{min-height:44px}
+@media(max-width:550px){
+ #digitalForm #eomDigitalGenrePicker{padding:10px}
+ #eomDigitalGenrePicker .eom-digital-genre-tools{grid-template-columns:1fr}
+ #eomDigitalGenreAll{width:100%}
+ #eomDigitalGenreList,.eom-digital-genre-list{max-height:360px;gap:7px;padding:7px}
+ .eom-digital-genre-item{min-height:51px;font-size:.8rem;padding:8px}
+ .eom-digital-genre-edit-form{padding:12px}
+}
+@media(max-width:365px){#eomDigitalGenreList,.eom-digital-genre-list{grid-template-columns:1fr}}
