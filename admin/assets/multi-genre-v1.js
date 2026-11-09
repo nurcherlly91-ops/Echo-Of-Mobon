@@ -267,7 +267,7 @@ function init(){
    };
  }
  const physical=window.EOMPHYSICALGENRES||attach('physical',bookGenre,'bookForm','addBookBtn','bookTitle','bookDescription');
- const digital=attach('digital',digitalGenre,'digitalForm','addDigitalBtn','digitalTitle');
+ const digital=window.EOMDIGITALGENRES||attach('digital',digitalGenre,'digitalForm','addDigitalBtn','digitalTitle');
  const editDialog=document.createElement('dialog');
  editDialog.id='eomGenreEditDialog';
  editDialog.className='eom-genre-edit-dialog';
