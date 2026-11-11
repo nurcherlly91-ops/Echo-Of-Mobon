@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="assets/classic-v3.css?v=20261102-1">
   <link rel="stylesheet" href="assets/mobile-language-fix.css?v=20261102-4">
   <link rel="stylesheet" href="assets/literacy-adventure-v1.css?v=20261102-1">
-  <link rel="stylesheet" href="assets/literacy-engagement-v2.css?v=20261102-1"><link rel="stylesheet" href="assets/rack-position-v1.css?v=20261107-3">
+  <link rel="stylesheet" href="assets/literacy-engagement-v2.css?v=20261102-1"><link rel="stylesheet" href="assets/rack-position-v1.css?v=20261107-3"><link rel="stylesheet" href="assets/guest-wisdom-v1.css?v=20261111-1"><link rel="stylesheet" href="assets/digital-shelves-v2.css?v=20261111-1">
 </head>
 <body class="eom-v3">
 <header class="topbar">
@@ -169,8 +169,8 @@
 
   <section id="digital" class="section-shell online-library digital-library-section">
     <div class="section-head-v3"><div><div class="kicker-v3">PERPUSTAKAAN DIGITAL</div><h2 data-i18n="digitalTitle">Perpustakaan Digital</h2><p class="muted-v3" data-i18n="digitalSub">Baca PDF atau teks digital yang tersedia secara legal.</p></div><div class="digital-library-badge"><b id="digitalCount">0</b><span>Buku Online</span></div></div>
-    <div class="digital-library-tools"><input id="digitalSearch" placeholder="Cari buku online, penulis, atau kategori..."><select id="digitalCategoryFilter"><option value="">Semua kategori</option></select></div>
-    <div class="bookshelf-frame"><div class="bookshelf-top"><span>RAK DIGITAL</span><small>Echo of Mobon · Literasi Suara Fayfiye</small></div><div id="digitalLibrary" class="digital-shelves"></div></div>
+    <div class="digital-library-tools"><input id="digitalSearch" placeholder="Cari buku digital, judul, penulis atau genre..." aria-label="Cari buku digital"><select id="digitalCategoryFilter" aria-label="Pilih kategori"><option value="">Semua kategori</option></select><select id="digitalGenreFilter" aria-label="Pilih genre"><option value="">Semua genre</option></select></div>
+    <div class="bookshelf-frame"><div class="bookshelf-top"><span>RAK BUKU DIGITAL</span><small>Seri Dony & Oma Mey & Opa Edy diprioritaskan · Bacaan lainnya tetap tersedia</small></div><div id="digitalLibrary" class="digital-shelves"></div></div>
   </section>
 
   <section id="english" class="section-shell learning-panel">
@@ -192,7 +192,29 @@
     </div>
   </section>
 
-  <section id="mobon-listens" class="section-shell">
+  <section id="eom-wisdom" class="section-shell">
+ <div class="section-head-v3 eom-wisdom-top"><div><div class="kicker-v3">SUARA KEBAIKAN · KATA BIJAK TAMU</div>
+ <h2>✨ Satu Minggu Kata Bijak</h2>
+ <p class="muted-v3 eom-wisdom-intro">Berbagi pesan kebaikan dengan foto pilihan. Setelah disetujui Admin, kata bijak ditampilkan selama 7 hari lalu otomatis hilang dari pajangan.</p></div>
+ <button id="eomWisdomRefresh" class="btn ghost" type="button">Muat Ulang Kata Bijak</button></div>
+ <p id="eomWisdomStatus" role="status">Memuat kata bijak pilihan...</p>
+ <div id="eomWisdomGallery" class="eom-wisdom-gallery" aria-live="polite"></div>
+ <div class="eom-wisdom-compose">
+  <h3>✍️ Titip Kata-Kata Bijak Anda</h3>
+  <p class="muted-v3">Isi Buku Tamu terlebih dahulu. Lampirkan satu foto terkait pesan, kemudian tunggu persetujuan Admin.</p>
+  <form id="eomWisdomForm">
+   <label>Nama tampilan (maksimal 50 karakter)<input id="eomWisdomName" maxlength="50" minlength="2" placeholder="Nama yang boleh ditampilkan" required></label>
+   <label>Kata-kata bijak (12–350 karakter)<textarea id="eomWisdomQuote" rows="4" maxlength="350" minlength="12" placeholder="Tuliskan pesan positif yang ingin dibagikan..." required></textarea></label>
+   <label>Lampirkan foto (JPG, PNG, WebP)<input id="eomWisdomPhoto" type="file" accept="image/jpeg,image/png,image/webp" required></label>
+   <label class="eom-wisdom-consent"><input type="checkbox" id="eomWisdomConsent" required>
+    <span>Saya memiliki hak untuk membagikan foto dan kutipan ini, serta setuju nama tampilan, foto, dan kutipan dipajang publik selama 7 hari jika disetujui Admin. Untuk peserta anak, persetujuan orang tua/wali diperlukan. Hindari informasi pribadi dalam foto.</span></label>
+   <button id="eomWisdomSubmit" class="btn primary" type="submit">📨 Kirim ke Admin untuk Ditinjau</button>
+   <p id="eomWisdomMessage" role="status" aria-live="polite"></p>
+  </form>
+ </div>
+</section>
+
+<section id="mobon-listens" class="section-shell">
     <div class="section-head-v3"><div><div class="kicker-v3">A QUIET PLACE TO BE HEARD</div><h2 data-i18n="listenTitle">Mobon Mendengar</h2><p class="muted-v3" data-i18n="listenSub">Ruang untuk menulis pengalaman hidup, keresahan, harapan, atau cerita yang ingin Anda keluarkan dari hati.</p></div></div>
     <div class="listening-layout">
       <div class="listening-intro"><div class="privacy-note">🔒 <span data-i18n="privacy">Cerita dikirim secara privat dan hanya dapat dibaca pengelola. Cerita tidak akan dipublikasikan tanpa pilihan dan persetujuan Anda.</span></div><blockquote>“Kadang manusia tidak membutuhkan jawaban lebih dulu. Ia hanya membutuhkan ruang yang cukup tenang untuk didengar.”</blockquote><p class="muted-v3">Mobon Mendengar bukan layanan darurat atau pengganti bantuan profesional. Ruang ini dibuat untuk berbagi cerita secara manusiawi dan privat.</p></div>
@@ -243,13 +265,13 @@
 <script src="assets/book-metadata.js?v=20261102-1"></script>
 <script src="assets/member-card-v2.js?v=20261102-1"></script>
 <script src="assets/guest-access-v1.js?v=20261104-2"></script>
-<script src="assets/guest-online.js?v=20261107-genre5"></script>
+<script src="assets/guest-online.js?v=20261111-shelves1"></script><script src="assets/guest-wisdom-v1.js?v=20261111-1"></script>
 <script src="assets/category-sync.js?v=20261102-1"></script>
 <script src="assets/eom-question-bank-v3.js?v=20261104-4"></script>
 <script src="assets/game-center-v1.js?v=20261104-4"></script>
 <script src="assets/game-nav-placement-v1.js?v=20261104-1"></script>
 <script src="assets/eom-school-exam-v1.js?v=20261104-3"></script>
-<script src="assets/eom-exam-online-v2.js?v=20261104-3"></script>
+<script src="assets/eom-exam-online-v2.js?v=20261111-mixed60"></script>
 <script src="assets/portal-v2.js?v=20261102-1"></script>
 <script src="assets/experience-v3.js?v=20261102-1"></script>
 <script src="assets/runtime-audio-v4.js?v=20261102-4"></script>
