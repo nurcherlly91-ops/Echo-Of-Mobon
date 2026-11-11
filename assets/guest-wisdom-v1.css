@@ -1,0 +1,23 @@
+/* Echo of Mobon — galeri kata bijak tamu selama tujuh hari */
+#eom-wisdom{margin-top:25px}
+.eom-wisdom-intro{line-height:1.55;max-width:840px}
+.eom-wisdom-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,255px),1fr));gap:16px;margin:18px 0 25px}
+.eom-wisdom-card{display:grid;grid-template-columns:95px minmax(0,1fr);align-items:stretch;gap:12px;border:1px solid #e0d4b9;border-radius:18px;background:linear-gradient(135deg,#fffaf0,#eaf5ee);padding:12px;box-shadow:0 8px 20px #28554a16}
+.eom-wisdom-card figure{margin:0;width:95px}
+.eom-wisdom-card img{width:95px;height:128px;object-fit:cover;border-radius:12px;background:#e4dfd1}
+.eom-wisdom-card blockquote{margin:0 0 9px;font-family:Georgia,serif;font-size:.97rem;line-height:1.48;color:#2b5349;overflow-wrap:anywhere;white-space:pre-line}
+.eom-wisdom-card strong,.eom-wisdom-card small{display:block;font-size:.83rem;line-height:1.45;color:#53675e}
+.eom-wisdom-card small{font-size:.7rem;margin-top:6px;color:#7a766e}
+.eom-wisdom-empty{grid-column:1/-1;padding:17px;background:#fffaf0;border:1px dashed #d4bc8c;border-radius:14px;color:#695a43}
+.eom-wisdom-compose{padding:18px;border:1px solid #c7ded1;border-radius:18px;background:#f5fbf7;max-width:720px}
+.eom-wisdom-compose h3{font-size:1.1rem;color:#235750;margin:0 0 7px}
+.eom-wisdom-compose form{display:grid;gap:12px}
+.eom-wisdom-compose label{display:flex;flex-direction:column;gap:6px;font-weight:700;font-size:.85rem;color:#3d6057}
+.eom-wisdom-compose input:not([type=checkbox]),.eom-wisdom-compose textarea{border:1px solid #bfd4ca;border-radius:11px;padding:11px 12px;font:inherit;background:#fff;min-height:44px;box-sizing:border-box;width:100%}
+.eom-wisdom-compose textarea{min-height:94px;resize:vertical}
+.eom-wisdom-compose .eom-wisdom-consent{flex-direction:row;align-items:start;font-size:.78rem;font-weight:500;line-height:1.5}
+.eom-wisdom-consent input{width:19px;height:19px;flex:0 0 19px;accent-color:#167663;margin-top:1px}
+#eomWisdomStatus,#eomWisdomMessage{font-size:.82rem;line-height:1.5;min-height:20px;color:#335f55}
+.eom-wisdom-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+#eomWisdomRefresh{min-height:41px}
+@media(max-width:480px){.eom-wisdom-compose{padding:12px}.eom-wisdom-card{grid-template-columns:80px minmax(0,1fr)}.eom-wisdom-card figure,.eom-wisdom-card img{width:80px}.eom-wisdom-card img{height:110px}}
