@@ -12,8 +12,76 @@ function isPdfBook(b){const u=String(b?.external_url||"");return b?.content_type
 function coverPalette(title=""){const p=[["#0b6070","#052843","#d3a645"],["#6b2e24","#b96c3f","#f0c26a"],["#315a36","#729b59","#e9c56b"],["#5a315d","#9b5f92","#e5b95f"],["#243d69","#5575a7","#d8aa4f"],["#64491f","#a77b35","#f0cb72"]];let n=0;for(const c of String(title))n=(n+c.charCodeAt(0))%p.length;return p[n]}
 function coverMarkup(b,cls=""){if(b.cover_url)return `<img class="digital-book-cover ${cls}" src="${b.cover_url}" alt="Cover ${EOMONLINE.esc(b.title)}" loading="lazy">`;const[a,z,g]=coverPalette(b.title);return `<div class="auto-book-cover ${cls}" style="--c1:${a};--c2:${z};--gold:${g}"><span class="auto-brand">ECHO OF MOBON</span><strong>${EOMONLINE.esc(b.title)}</strong><small>${EOMONLINE.esc(b.author||"Literasi Suara Fayfiye")}</small></div>`}
 function digitalButtonText(b){return isPdfBook(b)?"Baca PDF":(b.content_type==="url"?"Buka Sumber Legal":"Baca Sekarang")}
-function renderDigital(){const q=($("digitalSearch")?.value||"").trim().toLowerCase(),cat=$("digitalCategoryFilter")?.value||"";const arr=digitalBooks.filter(b=>(!q||`${b.title} ${b.author||""} ${b.category||""} ${b.summary||""}`.toLowerCase().includes(q))&&(!cat||b.category===cat));if($("digitalCount"))$("digitalCount").textContent=arr.length;if($("digitalCategoryFilter")){const current=$("digitalCategoryFilter").value,cats=[...new Set(digitalBooks.map(b=>b.category).filter(Boolean))].sort();$("digitalCategoryFilter").innerHTML='<option value="">Semua kategori</option>'+cats.map(c=>`<option ${c===current?"selected":""}>${EOMONLINE.esc(c)}</option>`).join("")}if(!arr.length){$("digitalLibrary").innerHTML='<div class="digital-empty"><b>Rak masih kosong.</b><span>Belum ada buku online yang cocok dengan pencarian.</span></div>';return}const rows=[];for(let i=0;i<arr.length;i+=5)rows.push(arr.slice(i,i+5));$("digitalLibrary").innerHTML=rows.map(row=>`<div class="shelf-row"><div class="shelf-books">${row.map(b=>`<article class="shelf-book" data-read="${b.id}" tabindex="0" role="button"><div class="book-object"><div class="book-ribbon">${isPdfBook(b)?"PDF":"DIGITAL"}</div>${coverMarkup(b)}</div><div class="shelf-book-meta"><h3>${EOMONLINE.esc(b.title)}</h3><p>${EOMONLINE.esc(b.author||"Echo of Mobon")}</p><div class="book-meta-mini"><span>${EOMONLINE.esc(b.category||"Bacaan")}</span><span>• ${Number(b.read_count||0)} dibaca</span></div><button class="btn shelf-read-btn" data-read="${b.id}">${digitalButtonText(b)}</button></div></article>`).join("")}</div><div class="wood-shelf"><span></span></div></div>`).join("");document.querySelectorAll("[data-read]").forEach(x=>{x.onclick=e=>{e.stopPropagation();readDigital(x.dataset.read)};x.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();readDigital(x.dataset.read)}}})}
-if($("digitalSearch"))$("digitalSearch").oninput=renderDigital;if($("digitalCategoryFilter"))$("digitalCategoryFilter").onchange=renderDigital;
+function digitalIsDony(b){
+ const value=String(b.title||'')+' '+String(b.summary||'');
+ return /\bdony\b/i.test(value);
+}
+function digitalIsChildren(b){
+ return digitalIsDony(b)||/anak|dongeng|fabel|cerita rakyat/i.test(String(b.category||'')+' '+String(b.genre||''));
+}
+function renderDigital(){
+ const q=($("digitalSearch")?.value||'').trim().toLowerCase(),
+  cat=$("digitalCategoryFilter")?.value||'',
+  genre=$("digitalGenreFilter")?.value||'';
+ const arr=digitalBooks.filter(b=>
+  (!q||[b.title,b.author,b.genre,b.category,b.summary].join(' ').toLowerCase().includes(q))&&
+  (!cat||b.category===cat)&&
+  (!genre||String(b.genre||'').split(',').map(x=>x.trim()).includes(genre))
+ );
+ if($("digitalCount"))$("digitalCount").textContent=arr.length;
+ if($("digitalCategoryFilter")){
+  const current=$("digitalCategoryFilter").value;
+  const cats=[...new Set(digitalBooks.map(b=>b.category).filter(Boolean))].sort();
+  $("digitalCategoryFilter").innerHTML='<option value="">Semua kategori</option>'+cats.map(c=>
+   '<option value="'+EOMONLINE.esc(c)+'" '+(c===current?'selected':'')+'>'+EOMONLINE.esc(c)+'</option>').join('');
+ }
+ if($("digitalGenreFilter")){
+  const current=$("digitalGenreFilter").value;
+  const allGenres=[...new Set(digitalBooks.flatMap(b=>String(b.genre||'').split(',').map(x=>x.trim()).filter(Boolean)))].sort();
+  $("digitalGenreFilter").innerHTML='<option value="">Semua genre</option>'+allGenres.map(v=>
+   '<option value="'+EOMONLINE.esc(v)+'" '+(v===current?'selected':'')+'>'+EOMONLINE.esc(v)+'</option>').join('');
+ }
+ const holder=$("digitalLibrary");
+ if(!holder)return;
+ if(!arr.length){
+  holder.innerHTML='<div class="digital-empty"><b>Rak digital kosong untuk pilihan ini.</b><span>Ubah pencarian/kategori/genre, atau buka kembali nanti setelah koleksi ditambah.</span></div>';
+  return;
+ }
+ const libraryRows=items=>{
+  const rows=[];
+  for(let i=0;i<items.length;i+=5)rows.push(items.slice(i,i+5));
+  return rows.map(row=>'<div class="shelf-row"><div class="shelf-books">'+row.map(b=>
+   '<article class="shelf-book" data-read="'+EOMONLINE.esc(b.id)+'" tabindex="0" role="button" aria-label="Baca '+EOMONLINE.esc(b.title)+'">'+
+   '<div class="book-object"><div class="book-ribbon">'+(isPdfBook(b)?'PDF':'DIGITAL')+'</div>'+coverMarkup(b)+'</div>'+
+   '<div class="shelf-book-meta"><h3>'+EOMONLINE.esc(b.title)+'</h3><p>'+EOMONLINE.esc(b.author||'Echo of Mobon')+'</p>'+
+   '<div class="book-meta-mini"><span>'+EOMONLINE.esc(b.category||'Bacaan')+'</span><span>• '+Number(b.read_count||0)+' dibaca</span></div>'+
+   '<div class="eom-digital-genre-chips">'+String(b.genre||'').split(',').map(x=>x.trim()).filter(Boolean).slice(0,3).map(x=>'<span>'+EOMONLINE.esc(x)+'</span>').join('')+'</div>'+
+   '<button class="btn shelf-read-btn" data-read="'+EOMONLINE.esc(b.id)+'">'+digitalButtonText(b)+'</button></div></article>'
+  ).join('')+'</div><div class="wood-shelf"><span></span></div></div>').join('');
+ };
+ const dony=arr.filter(digitalIsDony).sort((a,b)=>{
+  const volume=x=>Number(String(x.title||'').match(/vol(?:ume)?\s*(\d+)/i)?.[1]||0);
+  return volume(b)-volume(a);
+ });
+ const children=arr.filter(b=>!digitalIsDony(b)&&digitalIsChildren(b));
+ const study=arr.filter(b=>!digitalIsChildren(b)&&/pelajaran|sains|pengetahuan|akademik|sejarah|referensi|pendidikan|ensiklopedia/i.test(String(b.category||'')+' '+String(b.genre||'')));
+ const other=arr.filter(b=>!digitalIsChildren(b)&&!study.includes(b));
+ const sections=[
+  ['🌟 Petualangan Dony, Oma Mey & Opa Edy','Rak cerita anak unggulan · khusus buku Dony yang sudah diterbitkan.',dony],
+  ['🧸 Rak Cerita Anak','Dongeng, petualangan, dan bacaan anak lainnya.',children],
+  ['🔭 Rak Pengetahuan & Pelajaran','Belajar dari buku digital sesuai minat dan usia.',study],
+  ['📚 Rak Buku Digital Lainnya','Koleksi digital untuk semua pembaca.',other]
+ ];
+ holder.innerHTML=sections.filter(x=>x[2].length).map(([title,description,books])=>
+  '<section class="eom-digital-shelf-group"><header class="eom-digital-shelf-header"><div><h3>'+title+
+  '</h3><p>'+description+'</p></div><strong>'+books.length+' buku</strong></header>'+
+  libraryRows(books)+'</section>').join('');
+ document.querySelectorAll('[data-read]').forEach(x=>{
+  x.onclick=e=>{e.stopPropagation();readDigital(x.dataset.read)};
+  x.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();readDigital(x.dataset.read)}};
+ });
+}
+if($("digitalSearch"))$("digitalSearch").oninput=renderDigital;if($("digitalCategoryFilter"))$("digitalCategoryFilter").onchange=renderDigital;if($("digitalGenreFilter"))$("digitalGenreFilter").onchange=renderDigital;
 async function readDigital(id){const b=digitalBooks.find(x=>x.id===id);if(!b)return;if(b.content_type==="url"&&b.external_url&&!isPdfBook(b)){window.open(b.external_url,"_blank");return}$("readerTitle").textContent=b.title;$("readerMeta").textContent=`${b.author||"Echo of Mobon"}${b.reader_level?" · "+b.reader_level:""}`;$("readerBadges").innerHTML=`<span class="chip">${EOMONLINE.esc(b.category||"Bacaan Digital")}</span><span class="chip">${EOMONLINE.esc(b.copyright_status||"")}</span>${isPdfBook(b)?'<span class="chip pdf-chip">PDF</span>':""}`;$("readerCoverWrap").innerHTML=coverMarkup(b,"reader-book-cover");const pdf=isPdfBook(b);$("readerContent").classList.toggle("hidden",pdf);$("readerFontBtn").classList.toggle("hidden",pdf);$("readerPdfFrame").classList.toggle("hidden",!pdf);$("readerPdfOpen").classList.toggle("hidden",!pdf);if(pdf){$("readerPdfFrame").src=b.external_url;$("readerPdfOpen").href=b.external_url}else{$("readerPdfFrame").src="about:blank";$("readerPdfOpen").removeAttribute("href");$("readerContent").textContent=b.content_text||"Isi buku belum tersedia."}$("readerDialog").showModal();try{await SB.update("digital_books",`id=eq.${id}`,{read_count:Number(b.read_count||0)+1});b.read_count=Number(b.read_count||0)+1}catch{}}
 $("readerFontBtn").onclick=()=>{$("readerContent").classList.toggle("reader-large")};
 $("guestEntryBtn").onclick=()=>$("guestDialog").showModal();
