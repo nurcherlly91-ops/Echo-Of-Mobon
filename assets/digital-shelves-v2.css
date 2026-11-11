@@ -1,0 +1,13 @@
+/* Echo of Mobon — rak buku digital: seri Dony unggulan, rak cerita dan pengetahuan */
+#digital .digital-library-tools{display:grid;grid-template-columns:minmax(0,2fr) minmax(140px,1fr) minmax(130px,1fr);gap:10px;align-items:center}
+#digital .digital-library-tools input,#digital .digital-library-tools select{min-width:0;width:100%;min-height:44px;box-sizing:border-box}
+.eom-digital-shelf-group{margin:13px 0 29px;padding:4px 0}
+.eom-digital-shelf-header{display:flex;align-items:center;justify-content:space-between;gap:13px;flex-wrap:wrap;margin:6px 8px 14px;padding:13px 15px;background:linear-gradient(135deg,#f8f6ec,#e6f2eb);border:1px solid #d8d4b7;border-radius:14px}
+.eom-digital-shelf-header h3{margin:0 0 5px;font-size:1.18rem;color:#255b54;font-family:Georgia,serif}
+.eom-digital-shelf-header p{margin:0;font-size:.83rem;line-height:1.45;color:#61736b}
+.eom-digital-shelf-header>strong{display:block;background:#285b50;border-radius:18px;padding:6px 10px;color:white;font-size:.82rem;white-space:nowrap}
+.eom-digital-genre-chips{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0 9px}
+.eom-digital-genre-chips span{font-size:.67rem;background:#e8f1e9;border:1px solid #d0e5d4;color:#386b56;border-radius:14px;padding:3px 7px;line-height:1.35}
+.eom-digital-shelf-group .shelf-books{min-width:0}
+@media(max-width:630px){#digital .digital-library-tools{grid-template-columns:1fr 1fr}#digital #digitalSearch{grid-column:1/-1}.eom-digital-shelf-header{padding:10px 12px}.eom-digital-shelf-header h3{font-size:1.08rem}}
+@media(max-width:360px){#digital .digital-library-tools{grid-template-columns:1fr}#digital #digitalSearch{grid-column:auto}}
