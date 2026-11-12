@@ -69,10 +69,10 @@ jobs:
           pages = ["/tmp/eom-admin.html", "/tmp/eom-forgot.html"]
           for page in pages:
               html = Path(page).read_text(encoding="utf-8")
-              match = re.search(r'<input\\b[^>]*\\bid=["\\\']adminEmail["\\\'][^>]*>', html, re.I)
+              match = re.search('<input[^>]*id="adminEmail"[^>]*>', html, re.I)
               if not match:
                   raise SystemExit(f"Admin email field not found in {page}")
-              if re.search(r'\\bvalue\\s*=', match.group(0), re.I):
+              if "value=" in match.group(0).lower():
                   raise SystemExit(f"Privacy regression: admin email is prefilled in {page}")
           print("Privacy check OK: admin email inputs have no preset value.")
           PY
