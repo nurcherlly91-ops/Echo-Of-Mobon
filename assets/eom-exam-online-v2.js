@@ -49,9 +49,9 @@ function openExam(){
  $('#eomExamOnlineForm',box).onsubmit=async e=>{
   e.preventDefault();
   const config={level:level.value,grade:Number(grade.value),subject:'Semua Mata Pelajaran',mode:mode.value};
-  sessionStorage.setItem('eom_exam_prefs_v2',JSON.stringify(config));
+  try{sessionStorage.setItem('eom_exam_prefs_v2',JSON.stringify(config));}catch(_){}
   const submit=$('#eomExamOnlineForm button[type="submit"]',box),status=$('#eomOnlineMessage',box);submit.disabled=true;status.textContent='Menyiapkan soal berbeda untuk kunjungan ini...';
-  try{const data=await request('start',config);sessionStorage.setItem('eom_exam_last_attempt',data.attempt_id);runExam(d,config,data);}catch(err){status.textContent='Gagal memulai: '+err.message;submit.disabled=false;}
+  try{const data=await request('start',config);try{sessionStorage.setItem('eom_exam_last_attempt',data.attempt_id);}catch(_){}runExam(d,config,data);}catch(err){status.textContent='Gagal memulai: '+err.message;submit.disabled=false;}
  };
 }
 function runExam(d,config,data){
