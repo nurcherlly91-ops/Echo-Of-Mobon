@@ -23,6 +23,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Check JavaScript syntax before deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            node --check "$file"
+          done < <(find assets admin/assets -type f -name '*.js' -print0)
+          test -s assets/browser-storage-safe-v1.js
+          test -s assets/guest-online.js
+          test -s assets/supabase-online.js
+          test -s index.html
+          test -s admin/index.html
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
