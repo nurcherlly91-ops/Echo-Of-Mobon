@@ -2,12 +2,75 @@ document.addEventListener("DOMContentLoaded",()=>{
 const $=id=>document.getElementById(id);
 EOMONLINE.populate($("guestCategory"),EOMONLINE.categories,"Semua kategori");
 EOMONLINE.populate($("guestLevel"),EOMONLINE.levels,"Semua tingkat");
+$("guestCategory").value="";$("guestLevel").value="";
 let books=[],digitalBooks=[],member=null,guestIdentity=null,memberPhoto="",librarySettings={admin_phone:"",daily_fine:2000,delivery_fee:0,default_loan_days:7};
 const loadLocal=()=>{try{member=JSON.parse(sessionStorage.getItem("eom_member_online")||"null");guestIdentity=JSON.parse(sessionStorage.getItem("eom_guest_online")||"null")}catch{}};loadLocal();
 const today=new Date(),ret=new Date();ret.setDate(ret.getDate()+7);$("borrowDate").value=today.toISOString().slice(0,10);$("returnDate").value=ret.toISOString().slice(0,10);
-async function loadCatalog(){try{books=await SB.select("books","select=id,title,author,genre,category,reader_level,description,cover_url,book_status,qty_total,qty_available,collection_code,rack_no,created_at,active&active=eq.true&order=title.asc")}catch(e){console.error("Gagal memuat buku fisik",e);books=[]}try{digitalBooks=await SB.select("digital_books","select=*&is_published=eq.true&safe_content=eq.true&order=created_at.desc")}catch(e){console.error("Gagal memuat buku digital",e);digitalBooks=[]}try{const settings=await SB.rpc("public_library_settings",{});if(settings)librarySettings=settings}catch(e){console.error("Gagal memuat info layanan",e)}const days=Number(librarySettings.default_loan_days||7),d=new Date();d.setDate(d.getDate()+days);$("returnDate").value=d.toISOString().slice(0,10);renderServiceInfo();renderBooks();renderDigital()}
+let catalogLoading=false,catalogError=false,coverObserver=null,coverActive=0;
+const coverCache=new Map(),coverQueue=[];
+function paintCover(node,url){
+ if(!node?.isConnected||!url||!(/^(?:data:image\/(?:jpeg|png|webp|gif);base64,|https:\/\/)/i).test(url))return;
+ const im=document.createElement("img");
+ im.loading="lazy";im.decoding="async";im.alt="Sampul "+(node.textContent||"buku");im.src=url;
+ node.replaceWith(im);
+}
+function pumpCovers(){
+ while(coverActive<3&&coverQueue.length){
+  const node=coverQueue.shift();
+  if(!node?.isConnected)continue;
+  const id=node.dataset.coverId;
+  if(coverCache.has(id)){paintCover(node,coverCache.get(id));continue}
+  coverActive++;
+  SB.select("books","select=id,cover_url&id=eq."+encodeURIComponent(id)+"&active=eq.true&limit=1")
+   .then(rows=>{const url=rows?.[0]?.cover_url||"";coverCache.set(id,url);paintCover(node,url)})
+   .catch(e=>console.warn("Foto sampul belum berhasil dimuat",e))
+   .finally(()=>{coverActive--;pumpCovers()});
+ }
+}
+function observeCovers(){
+ if(coverObserver)coverObserver.disconnect();
+ const placeholders=[...document.querySelectorAll(".eom-cover-pending[data-cover-id]")];
+ if(!("IntersectionObserver" in window)){placeholders.slice(0,16).forEach(node=>coverQueue.push(node));pumpCovers();return}
+ coverObserver=new IntersectionObserver(entries=>{
+  for(const e of entries)if(e.isIntersecting){coverObserver.unobserve(e.target);coverQueue.push(e.target)}
+  pumpCovers();
+ },{rootMargin:"200px"});
+ for(const node of placeholders){if(coverCache.has(node.dataset.coverId))paintCover(node,coverCache.get(node.dataset.coverId));else coverObserver.observe(node)}
+}
+function emptyCatalogMessage(){
+ if(catalogLoading)return '<div class="empty">Sedang memuat daftar koleksi buku...</div>';
+ if(catalogError)return '<div class="empty">Katalog buku belum dapat dimuat. Periksa internet lalu <button type="button" id="catalogRetryBtn" class="btn">Coba Muat Ulang</button></div>';
+ if(books.length)return '<div class="empty">Tidak ada buku yang sesuai dengan filter. <button type="button" id="catalogResetBtn" class="btn">Tampilkan Semua Buku</button></div>';
+ return '<div class="empty">Belum ada koleksi fisik.</div>';
+}
+async function loadCatalog(){
+ catalogLoading=true;catalogError=false;renderBooks();
+ const physical=(async()=>{
+  try{
+   const rows=await SB.select("books","select=id,title,author,genre,category,reader_level,description,book_status,qty_total,qty_available,collection_code,rack_no,created_at,active&active=eq.true&order=title.asc");
+   if(!Array.isArray(rows))throw new Error("Data katalog tidak valid");
+   books=rows;catalogError=false;
+  }catch(e){catalogError=true;console.error("Gagal memuat daftar buku fisik",e)}
+  finally{catalogLoading=false;renderBooks()}
+ })();
+ const settings=(async()=>{
+  try{
+   const s=await SB.rpc("public_library_settings",{});
+   if(s)librarySettings=s;
+   const days=Number(librarySettings.default_loan_days||7),d=new Date();
+   d.setDate(d.getDate()+days);$("returnDate").value=d.toISOString().slice(0,10);
+   renderServiceInfo();
+  }catch(e){console.warn("Info layanan gagal dimuat",e);$("serviceInfoText").textContent="Info layanan belum tersedia. Silakan coba muat ulang halaman."}
+ })();
+ const digital=(async()=>{
+  try{digitalBooks=await SB.select("digital_books","select=*&is_published=eq.true&safe_content=eq.true&order=created_at.desc")}
+  catch(e){console.error("Gagal memuat buku digital",e);digitalBooks=[]}
+  finally{renderDigital()}
+ })();
+ await Promise.allSettled([physical,settings,digital]);
+}
 function renderServiceInfo(){const phone=String(librarySettings.admin_phone||"").replace(/^"|"$/g,"").trim(),fine=Number(librarySettings.daily_fine||0),fee=Number(librarySettings.delivery_fee||0);$("serviceInfoText").innerHTML=`Admin/WhatsApp: <b>${phone?EOMONLINE.esc(phone):"Belum diatur"}</b> · Denda keterlambatan: <b>${EOMONLINE.rupiah(fine)}/hari</b> · Pengantaran buku: <b>${EOMONLINE.rupiah(fee)}</b>`}
-function renderBooks(){const q=$("guestSearch").value.toLowerCase(),cat=$("guestCategory").value,lvl=$("guestLevel").value;const sequence=window.EOMRACK?.enumerate(books)||{ordered:books,positions:new Map()};const arr=sequence.ordered.filter(b=>(!q||`${b.title} ${b.author||""} ${b.genre||""} ${b.collection_code||""} ${b.rack_no||""} ${sequence.positions.get(String(b.id))?.code||""}`.toLowerCase().includes(q))&&(!cat||b.category===cat)&&(!lvl||b.reader_level===lvl));$("guestBooks").innerHTML=arr.map(b=>{const displayStatus=(b.book_status==="Tersedia"&&Number(b.qty_available)>0)?"Tersedia":(b.book_status==="Tersedia"?"Dipinjam":b.book_status),available=displayStatus==="Tersedia";return `<article class="book-card"><div class="book-cover">${b.cover_url?`<img src="${b.cover_url}">`:`<div class="placeholder">${EOMONLINE.esc(b.title)}</div>`}<span class="badge">${EOMONLINE.esc(displayStatus)} · ${b.qty_available}/${b.qty_total}</span></div><div class="book-body"><h3>${EOMONLINE.esc(b.title)}</h3><p>${EOMONLINE.esc(b.author||"Penulis tidak dicantumkan")}</p><div class="chips">${sequence.positions.get(String(b.id))?.number?`<span class="chip eom-rack-position">📚 ${EOMONLINE.esc(sequence.positions.get(String(b.id)).label)}</span>`:""}<span class="chip">${EOMONLINE.esc(b.category||"-")}</span>${String(b.genre||"").split(",").map(v=>v.trim()).filter(Boolean).slice(0,5).map(v=>`<span class="chip eom-genre-public">🏷️ ${EOMONLINE.esc(v)}</span>`).join("")}<span class="chip">${EOMONLINE.esc(b.reader_level||"Umum")}</span>${b.rack_no?`<span class="chip">Rak ${EOMONLINE.esc(b.rack_no)}</span>`:""}${b.collection_code?`<span class="chip">Kode ${EOMONLINE.esc(b.collection_code)}</span>`:""}</div>${b.description?`<p>${EOMONLINE.esc(b.description)}</p>`:""}<button class="btn ${available?"primary":"ghost"}" ${available?`data-borrow="${b.id}"`:"disabled"}>${available?"Ajukan Peminjaman":"Tidak Tersedia"}</button></div></article>`}).join("")||'<div class="empty">Belum ada koleksi fisik.</div>';document.querySelectorAll("[data-borrow]").forEach(b=>b.onclick=()=>openBorrow(b.dataset.borrow));$("collectionSummary").textContent=`${arr.length} judul buku fisik tersedia di katalog online.`}
+function renderBooks(){const q=$("guestSearch").value.toLowerCase(),cat=$("guestCategory").value,lvl=$("guestLevel").value;const sequence=window.EOMRACK?.enumerate(books)||{ordered:books,positions:new Map()};const arr=sequence.ordered.filter(b=>(!q||`${b.title} ${b.author||""} ${b.genre||""} ${b.collection_code||""} ${b.rack_no||""} ${sequence.positions.get(String(b.id))?.code||""}`.toLowerCase().includes(q))&&(!cat||b.category===cat)&&(!lvl||b.reader_level===lvl));$("guestBooks").innerHTML=arr.map(b=>{const displayStatus=(b.book_status==="Tersedia"&&Number(b.qty_available)>0)?"Tersedia":(b.book_status==="Tersedia"?"Dipinjam":b.book_status),available=displayStatus==="Tersedia";return `<article class="book-card"><div class="book-cover">${`<div class="placeholder eom-cover-pending" data-cover-id="${EOMONLINE.esc(String(b.id))}">${EOMONLINE.esc(b.title)}</div>`}<span class="badge">${EOMONLINE.esc(displayStatus)} · ${b.qty_available}/${b.qty_total}</span></div><div class="book-body"><h3>${EOMONLINE.esc(b.title)}</h3><p>${EOMONLINE.esc(b.author||"Penulis tidak dicantumkan")}</p><div class="chips">${sequence.positions.get(String(b.id))?.number?`<span class="chip eom-rack-position">📚 ${EOMONLINE.esc(sequence.positions.get(String(b.id)).label)}</span>`:""}<span class="chip">${EOMONLINE.esc(b.category||"-")}</span>${String(b.genre||"").split(",").map(v=>v.trim()).filter(Boolean).slice(0,5).map(v=>`<span class="chip eom-genre-public">🏷️ ${EOMONLINE.esc(v)}</span>`).join("")}<span class="chip">${EOMONLINE.esc(b.reader_level||"Umum")}</span>${b.rack_no?`<span class="chip">Rak ${EOMONLINE.esc(b.rack_no)}</span>`:""}${b.collection_code?`<span class="chip">Kode ${EOMONLINE.esc(b.collection_code)}</span>`:""}</div>${b.description?`<p>${EOMONLINE.esc(b.description)}</p>`:""}<button class="btn ${available?"primary":"ghost"}" ${available?`data-borrow="${b.id}"`:"disabled"}>${available?"Ajukan Peminjaman":"Tidak Tersedia"}</button></div></article>`}).join("")||emptyCatalogMessage();observeCovers();const retry=$("catalogRetryBtn");if(retry)retry.onclick=loadCatalog;const reset=$("catalogResetBtn");if(reset)reset.onclick=()=>{$("guestSearch").value="";$("guestCategory").value="";$("guestLevel").value="";renderBooks()};document.querySelectorAll("[data-borrow]").forEach(b=>b.onclick=()=>openBorrow(b.dataset.borrow));$("collectionSummary").textContent=catalogLoading?"Sedang memuat katalog buku fisik...":catalogError?"Katalog belum dapat dimuat — silakan coba lagi.":`${arr.length} dari ${books.length} judul buku fisik ditampilkan di katalog online.`}
 function isPdfBook(b){const u=String(b?.external_url||"");return b?.content_type==="url"&&(/\.pdf(?:$|\?)/i.test(u)||u.includes("/storage/v1/object/public/digital-books/"))}
 function coverPalette(title=""){const p=[["#0b6070","#052843","#d3a645"],["#6b2e24","#b96c3f","#f0c26a"],["#315a36","#729b59","#e9c56b"],["#5a315d","#9b5f92","#e5b95f"],["#243d69","#5575a7","#d8aa4f"],["#64491f","#a77b35","#f0cb72"]];let n=0;for(const c of String(title))n=(n+c.charCodeAt(0))%p.length;return p[n]}
 function coverMarkup(b,cls=""){if(b.cover_url)return `<img class="digital-book-cover ${cls}" src="${b.cover_url}" alt="Cover ${EOMONLINE.esc(b.title)}" loading="lazy">`;const[a,z,g]=coverPalette(b.title);return `<div class="auto-book-cover ${cls}" style="--c1:${a};--c2:${z};--gold:${g}"><span class="auto-brand">ECHO OF MOBON</span><strong>${EOMONLINE.esc(b.title)}</strong><small>${EOMONLINE.esc(b.author||"Literasi Suara Fayfiye")}</small></div>`}
@@ -135,7 +198,7 @@ $("guestForm").onsubmit=async e=>{
 };
 $("joinMemberBtn").onclick=()=>{$("memberJoinForm").reset();memberPhoto="";$("joinPhotoPreview").classList.add("hidden");$("joinMemberNo").value="Otomatis setelah daftar";$("memberJoinDialog").showModal()};
 $("joinPhoto").onchange=async e=>{if(e.target.files[0]){memberPhoto=await EOMONLINE.image(e.target.files[0],420,.68);$("joinPhotoPreview").src=memberPhoto;$("joinPhotoPreview").classList.remove("hidden")}};
-$("memberJoinForm").onsubmit=async e=>{e.preventDefault();const args={p_full_name:$("joinName").value.trim(),p_phone:$("joinPhone").value.trim(),p_address:$("joinAddress").value.trim(),p_occupation_status:$("joinRole").value,p_school_institution:null,p_photo_url:memberPhoto||null};try{let result;try{result=await SB.rpc("register_member_v2",args)}catch{result=await SB.rpc("register_member",{p_full_name:args.p_full_name,p_phone:args.p_phone,p_address:args.p_address,p_occupation_status:args.p_occupation_status,p_school_institution:null})}const r=Array.isArray(result)?result[0]:result;member={...r,phone:args.p_phone,address:args.p_address,occupation_status:args.p_occupation_status,photo_url:memberPhoto};sessionStorage.setItem("eom_member_online",JSON.stringify(member));$("memberJoinDialog").close();updateMemberUI();showMemberCard();alert("Pendaftaran anggota berhasil. Nomor anggota: "+member.member_no)}catch(err){alert("Gagal mendaftar anggota: "+err.message)}};
+$("memberJoinForm").onsubmit=async e=>{e.preventDefault();const args={p_full_name:$("joinName").value.trim(),p_phone:$("joinPhone").value.trim(),p_address:$("joinAddress").value.trim(),p_occupation_status:$("joinRole").value,p_school_institution:null,p_photo_url:memberPhoto||null};try{let result;try{result=await SB.rpc("register_member_v2",args)}catch{result=await SB.rpc("register_member",{p_full_name:args.p_full_name,p_phone:args.p_phone,p_address:args.p_address,p_occupation_status:args.p_occupation_status,p_school_institution:null})}const r=Array.isArray(result)?result[0]:result;member={...r,phone:args.p_phone,address:args.p_address,occupation_status:args.p_occupation_status,photo_url:memberPhoto};try{sessionStorage.setItem("eom_member_online",JSON.stringify(member))}catch(_){}$("memberJoinDialog").close();updateMemberUI();showMemberCard();alert("Pendaftaran anggota berhasil. Nomor anggota: "+member.member_no)}catch(err){alert("Gagal mendaftar anggota: "+err.message)}};
 function updateMemberUI(){const ok=!!member;$("myCardBtn").classList.toggle("hidden",!ok);$("myHistorySection").classList.toggle("hidden",!ok);$("memberWelcome").classList.toggle("hidden",!ok);if(ok){$("memberWelcome").innerHTML=`<b>Anggota aktif:</b> ${EOMONLINE.esc(member.full_name)} · ${EOMONLINE.esc(member.member_no)}`;loadHistory()}}
 function showMemberCard(){if(!member)return;const qrPayload=member.qr_code||`EOM-MEMBER:${member.member_no}`;$("myCardContent").innerHTML=`<div class="member-card"><div class="member-card-head"><img src="assets/echo-of-mobon-logo.svg"><div><b>ECHO OF MOBON</b><small>Literasi Suara Fayfiye</small></div></div><div class="member-card-body">${member.photo_url?`<img class="member-card-photo" src="${member.photo_url}">`:""}<div><h3>${EOMONLINE.esc(member.full_name)}</h3><p>${EOMONLINE.esc(member.member_no)}</p><p>${EOMONLINE.esc(member.occupation_status||"Anggota")}</p></div><canvas id="memberQrCanvas" width="160" height="160"></canvas></div></div>`;setTimeout(()=>EOMQR.draw($("memberQrCanvas"),qrPayload),50);$("myCardDialog").showModal()}
 $("myCardBtn").onclick=showMemberCard;$("printMyCardBtn").onclick=()=>window.print();
