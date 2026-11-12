@@ -1,6 +1,24 @@
 'use strict';
 const fs = require('node:fs');
 const assert = require('node:assert/strict');
+const vm = require('node:vm');
+function checkRestrictedBrowserStorage(){
+  const window={};
+  for(const name of ['localStorage','sessionStorage']){
+    Object.defineProperty(window,name,{get(){throw Error('Access denied')}});
+  }
+  const source=fs.readFileSync('assets/browser-storage-safe-v1.js','utf8');
+  vm.runInNewContext(source,{window,Map,Object,String,Set});
+  for(const kind of ['local','session']){
+    const store=window.EOMStorage[kind];
+    store.setItem('probe','works');
+    assert.equal(store.getItem('probe'),'works');
+    store.removeItem('probe');
+    assert.equal(store.getItem('probe'),null);
+  }
+  console.log('Browser storage fallback: OK');
+}
+checkRestrictedBrowserStorage();
 const src = fs.readFileSync('assets/supabase-online.js', 'utf8');
 function find(name) {
   const line = src.split('\n').find(x => x.startsWith('const '+name+' = '));
