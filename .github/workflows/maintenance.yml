@@ -1,6 +1,8 @@
 name: Echo of Mobon Automatic Maintenance
 
 on:
+  push:
+    branches: ["main"]
   schedule:
     - cron: "17 */6 * * *"
   workflow_dispatch:
@@ -76,3 +78,9 @@ jobs:
                   raise SystemExit(f"Privacy regression: admin email is prefilled in {page}")
           print("Privacy check OK: admin email inputs have no preset value.")
           PY
+
+      - name: Validate storage fallback and real public API responses
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/smoke-public-api.cjs
